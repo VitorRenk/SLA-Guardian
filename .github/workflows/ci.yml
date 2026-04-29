@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install API deps
+        run: cd api && npm install
+
+      - name: Install Worker deps
+        run: cd worker && npm install
+
+      - name: Run lint
+        run: echo "Add linter here"
+
+      - name: Run tests
+        run: echo "Add tests here"
