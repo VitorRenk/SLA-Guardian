@@ -6,7 +6,6 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0+-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker)](https://www.docker.com/)
 [![Redis](https://img.shields.io/badge/Redis-7+-red?logo=redis)](https://redis.io/)
-[![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
 
 ---
 
@@ -458,18 +457,6 @@ sla-guardian-worker  | 🎉 Job 1 concluído
 
 ---
 
-## 📈 Possíveis Melhorias Futuras
-
-- [ ] Dashboard Grafana para visualização
-- [ ] Alertas via Slack/Email
-- [ ] Persistência de histórico (PostgreSQL)
-- [ ] Autoscaling de workers
-- [ ] Testes unitários & E2E
-- [ ] CI/CD pipeline (GitHub Actions)
-- [ ] Suporte a múltiplas regiões
-
----
-
 ## 🤝 Como Contribuir
 
 1. Fork o repositório
@@ -477,22 +464,6 @@ sla-guardian-worker  | 🎉 Job 1 concluído
 3. Commit suas mudanças (`git commit -m 'Add nova feature'`)
 4. Push para a branch (`git push origin feature/nova-feature`)
 5. Abra um Pull Request
-
----
-
-## 📝 Licença
-
-Este projeto está sob licença MIT. Veja [LICENSE](LICENSE) para detalhes.
-
----
-
-## 👨‍💻 Desenvolvido por
-
-**[Seu Nome]**
-
-- 📧 Email: seu.email@exemplo.com
-- 💼 LinkedIn: [seu-linkedin](https://linkedin.com)
-- 🐙 GitHub: [@seu-usuario](https://github.com/seu-usuario)
 
 ---
 
