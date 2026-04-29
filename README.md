@@ -81,7 +81,16 @@
 - Múltiplos workers paralelos
 - Jobs persistidos no Redis
 
-📈 **Observabilidade**
+� **Sistema de Alertas Multi-Canal** ⭐ NOVO
+
+- Console (desenvolvimento)
+- Webhook customizado (HTTP POST)
+- Slack integration (notificações em tempo real)
+- Email SMTP (alertas por email)
+- Inteligência para evitar spam (threshold + cooldown)
+- Notificações de recuperação automáticas
+
+�📈 **Observabilidade**
 
 - Prometheus metrics integradas
 - Health check endpoints
@@ -194,6 +203,123 @@ SECONDARY_URL=https://example.com
 
 ---
 
+## � Sistema de Alertas Inteligente
+
+O SLA Guardian possui um sistema robusto de notificações multi-canal que permite enviar alertas através de diferentes plataformas.
+
+### 📬 Canais Disponíveis
+
+#### 💻 Console (Padrão)
+
+Exibe alertas no terminal do worker. Perfeito para desenvolvimento.
+
+```bash
+┌─────────────────────────────────────────────────────────┐
+│ ❌ ALERTA DE MONITORAMENTO
+├─────────────────────────────────────────────────────────┤
+│ Serviço:     https://google.com
+│ Status:      FAILURE
+│ Mensagem:    Falha ao verificar serviço
+│ Tempo:       29/04/2026 14:30:45
+│ Erro:        getaddrinfo ENOTFOUND
+│ Tentativas:  3/5
+│ Duração:     0ms
+└─────────────────────────────────────────────────────────┘
+```
+
+#### 🪝 Webhook Genérico
+
+Envie alertas para qualquer URL que aceite POST HTTP.
+
+```env
+WEBHOOK_URL=https://seu-servidor.com/alerts
+```
+
+Payload enviado:
+
+```json
+{
+  "alert": {
+    "service": "https://google.com",
+    "status": "failure",
+    "message": "Falha ao verificar serviço",
+    "error": "Timeout exceeded",
+    "duration": 5000,
+    "timestamp": "2026-04-29T14:30:45.000Z"
+  },
+  "metadata": {
+    "project": "SLA Guardian",
+    "environment": "production",
+    "version": "1.0.0"
+  }
+}
+```
+
+#### 💬 Slack
+
+Integração nativa com Slack para notificações em tempo real.
+
+```env
+SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/WEBHOOK/URL
+```
+
+**Como obter Webhook URL do Slack:**
+
+1. Acesse https://api.slack.com/apps
+2. Crie uma nova app ou selecione existente
+3. Vá em "Incoming Webhooks"
+4. Ative e clique em "Add New Webhook to Workspace"
+5. Selecione o canal desejado
+6. Copie o URL gerado
+
+#### 📧 Email
+
+Notificações por email via SMTP.
+
+```env
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=seu-email@gmail.com
+SMTP_PASS=sua-senha-ou-app-password
+SMTP_FROM=sla-guardian@example.com
+ALERT_EMAIL=admin@example.com
+```
+
+**Configuração Gmail:**
+
+1. Ative "Menos segurança" ou use "Senha de Aplicativo"
+2. Para 2FA, gere uma app-specific password
+3. Use a app-specific password no `SMTP_PASS`
+
+### ⚙️ Configuração de Alertas
+
+```env
+# Console (sempre ativo)
+
+# Webhook customizado
+WEBHOOK_URL=https://seu-webhook.com/alerts
+
+# Slack
+SLACK_WEBHOOK_URL=https://hooks.slack.com/services/...
+
+# Email
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=seu-email@gmail.com
+SMTP_PASS=app-password
+ALERT_EMAIL=admin@example.com
+```
+
+### 🎯 Lógica Inteligente de Alertas
+
+- **Threshold**: Dispara alerta apenas após 3 falhas consecutivas
+- **Cooldown**: Evita spam com intervalo de 5 minutos entre alertas do mesmo serviço
+- **Recuperação**: Notifica automaticamente quando o serviço volta a funcionar
+- **Context**: Inclui número de tentativas, duração e erro específico
+
+---
+
 ## 📁 Estrutura do Projeto
 
 ```
@@ -211,7 +337,10 @@ sla-guardian/
 │   │   ├── index.ts          # Entry point
 │   │   ├── monitor.ts        # BullMQ + Worker logic
 │   │   ├── scheduler.ts      # Health check scheduling
-│   │   └── retry.ts          # Retry logic
+│   │   ├── alert.ts          # 🔔 Alert manager
+│   │   ├── notifications.ts  # 📮 Canais de notificação
+│   │   ├── retry.ts          # Retry logic
+│   │   └── types.ts          # TypeScript definitions
 │   ├── Dockerfile
 │   ├── package.json
 │   ├── tsconfig.json

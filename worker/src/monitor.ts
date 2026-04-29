@@ -3,6 +3,8 @@ import IORedis from "ioredis";
 import axios from "axios";
 import cron from "node-cron";
 import dotenv from "dotenv";
+import { alertManager } from "./alert";
+import { ConsoleChannel, WebhookChannel, SlackChannel } from "./notifications";
 
 dotenv.config();
 
@@ -24,6 +26,17 @@ const jobOptions: JobsOptions = {
     delay: 3000,
   },
 };
+
+// 🔔 Configurar canais de alerta
+alertManager.addChannel(new ConsoleChannel());
+
+if (process.env.WEBHOOK_URL) {
+  alertManager.addChannel(new WebhookChannel(process.env.WEBHOOK_URL));
+}
+
+if (process.env.SLACK_WEBHOOK_URL) {
+  alertManager.addChannel(new SlackChannel(process.env.SLACK_WEBHOOK_URL));
+}
 
 // 🌐 Serviço que será monitorado
 const TARGET_URL = process.env.TARGET_URL || "https://google.com";
@@ -59,7 +72,32 @@ const worker = new Worker(
     const result = await checkService(url);
 
     if (!result.success) {
+      // Disparar alerta de falha
+      await alertManager.alert({
+        service: url,
+        status: "failure",
+        message: `Falha ao verificar serviço: ${url}`,
+        error: result.error,
+        duration: 0,
+        retryCount: job.attemptsMade,
+        maxRetries: job.opts.attempts,
+        timestamp: new Date(),
+      });
+
       throw new Error(result.error || "Falha no monitoramento");
+    }
+
+    // Disparar alerta de recuperação se estava falhando
+    const status = alertManager.getStatus();
+    const serviceStatus = status.find((s) => s.service === url);
+    if (serviceStatus && serviceStatus.failures > 0) {
+      await alertManager.alert({
+        service: url,
+        status: "recovered",
+        message: `Serviço recuperado: ${url}`,
+        duration: result.duration,
+        timestamp: new Date(),
+      });
     }
 
     return result;
