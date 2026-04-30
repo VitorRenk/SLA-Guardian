@@ -1,4 +1,4 @@
-# �️ SLA Guardian
+# SLA Guardian
 
 > **Sistema de Monitoramento e Garantia de SLA em Tempo Real**
 
@@ -63,24 +63,24 @@
 
 ## ✨ Features Principais
 
-🔄 **Retry Automático com Backoff Exponencial**
+**Retry Automático com Backoff Exponencial**
 
 - Implementação robusta que trata falhas transitórias
 - Exponential backoff para evitar sobrecarga
 
-📊 **Monitoramento em Tempo Real**
+  **Monitoramento em Tempo Real**
 
 - Verificação de saúde a cada 30 segundos
 - Métricas detalhadas por serviço
 - Tempo de resposta individual
 
-⚡ **Processamento Distribuído**
+  **Processamento Distribuído**
 
 - BullMQ para filas resilientes
 - Múltiplos workers paralelos
 - Jobs persistidos no Redis
 
-� **Sistema de Alertas Multi-Canal** ⭐ NOVO
+  **Sistema de Alertas Multi-Canal** ⭐ NOVO
 
 - Console (desenvolvimento)
 - Webhook customizado (HTTP POST)
@@ -89,13 +89,13 @@
 - Inteligência para evitar spam (threshold + cooldown)
 - Notificações de recuperação automáticas
 
-�📈 **Observabilidade**
+  **Observabilidade**
 
 - Prometheus metrics integradas
 - Health check endpoints
 - Logs estruturados com Pino
 
-🐳 **Pronto para Produção**
+  **Pronto para Produção**
 
 - Docker & Docker Compose
 - Graceful shutdown
@@ -105,13 +105,13 @@
 
 ## 🚀 Quick Start
 
-### 📋 Pré-requisitos
+### Pré-requisitos
 
 - Docker & Docker Compose
 - Node.js 20+
 - npm 10+
 
-### ⚡ Instalação (1 minuto)
+### Instalação (1 minuto)
 
 ```bash
 # Clonar repositório
@@ -124,7 +124,7 @@ cd api && npm install && cd ..
 cd worker && npm install && cd ..
 ```
 
-### 🎯 Executar com Docker Compose
+### Executar com Docker Compose
 
 ```bash
 docker-compose up --build
@@ -136,7 +136,7 @@ Serviços iniciados:
 - 📊 **Métricas**: http://localhost:3000/metrics
 - 📮 **Redis**: localhost:6379
 
-### 🧪 Testar a API
+### Testar a API
 
 ```bash
 # Health check
@@ -202,13 +202,13 @@ SECONDARY_URL=https://example.com
 
 ---
 
-## � Sistema de Alertas Inteligente
+## Sistema de Alertas Inteligente
 
 O SLA Guardian possui um sistema robusto de notificações multi-canal que permite enviar alertas através de diferentes plataformas.
 
-### 📬 Canais Disponíveis
+### Canais Disponíveis
 
-#### 💻 Console (Padrão)
+#### Console (Padrão)
 
 Exibe alertas no terminal do worker. Perfeito para desenvolvimento.
 
@@ -226,7 +226,7 @@ Exibe alertas no terminal do worker. Perfeito para desenvolvimento.
 └─────────────────────────────────────────────────────────┘
 ```
 
-#### 🪝 Webhook Genérico
+#### Webhook Genérico
 
 Envie alertas para qualquer URL que aceite POST HTTP.
 
@@ -254,7 +254,7 @@ Payload enviado:
 }
 ```
 
-#### 💬 Slack
+#### Slack
 
 Integração nativa com Slack para notificações em tempo real.
 
@@ -271,7 +271,7 @@ SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/WEBHOOK/URL
 5. Selecione o canal desejado
 6. Copie o URL gerado
 
-#### 📧 Email
+#### Email
 
 Notificações por email via SMTP.
 
@@ -291,7 +291,7 @@ ALERT_EMAIL=admin@example.com
 2. Para 2FA, gere uma app-specific password
 3. Use a app-specific password no `SMTP_PASS`
 
-### ⚙️ Configuração de Alertas
+### Configuração de Alertas
 
 ```env
 # Console (sempre ativo)
@@ -310,7 +310,7 @@ SMTP_PASS=app-password
 ALERT_EMAIL=admin@example.com
 ```
 
-### 🎯 Lógica Inteligente de Alertas
+### Lógica de Alertas
 
 - **Threshold**: Dispara alerta apenas após 3 falhas consecutivas
 - **Cooldown**: Evita spam com intervalo de 5 minutos entre alertas do mesmo serviço
@@ -427,29 +427,29 @@ sla-guardian-worker  | 🎉 Job 1 concluído
 
 ## 🎓 Aprendizados & Conceitos Demonstrados
 
-✨ **Arquitetura Distribuída**
+**Arquitetura Distribuída**
 
 - Padrão Message Queue com BullMQ
 - Desacoplamento de serviços
 
-🔐 **TypeScript & Type Safety**
+  **TypeScript & Type Safety**
 
 - Tipagem forte em todo o projeto
 - Melhor experiência de desenvolvimento
 
-🚀 **Resiliência**
+  **Resiliência**
 
 - Retry automático
 - Backoff exponencial
 - Graceful shutdown
 
-📊 **Observabilidade**
+  **Observabilidade**
 
 - Prometheus metrics
 - Structured logging
 - Health checks
 
-🐳 **DevOps & Infrastructure**
+  **DevOps & Infrastructure**
 
 - Docker & Docker Compose
 - Multi-container orchestration
