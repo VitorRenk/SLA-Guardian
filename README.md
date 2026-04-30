@@ -63,43 +63,14 @@
 
 ## ✨ Features Principais
 
-**Retry Automático com Backoff Exponencial**
-
-- Implementação robusta que trata falhas transitórias
-- Exponential backoff para evitar sobrecarga
-
-  **Monitoramento em Tempo Real**
-
-- Verificação de saúde a cada 30 segundos
-- Métricas detalhadas por serviço
-- Tempo de resposta individual
-
-  **Processamento Distribuído**
-
-- BullMQ para filas resilientes
-- Múltiplos workers paralelos
-- Jobs persistidos no Redis
-
-  **Sistema de Alertas Multi-Canal** ⭐ NOVO
-
-- Console (desenvolvimento)
-- Webhook customizado (HTTP POST)
-- Slack integration (notificações em tempo real)
-- Email SMTP (alertas por email)
-- Inteligência para evitar spam (threshold + cooldown)
-- Notificações de recuperação automáticas
-
-  **Observabilidade**
-
-- Prometheus metrics integradas
-- Health check endpoints
-- Logs estruturados com Pino
-
-  **Pronto para Produção**
-
-- Docker & Docker Compose
-- Graceful shutdown
-- Tratamento de sinais SIGINT/SIGTERM
+| Recurso                          | Descrição                                                                        |
+| -------------------------------- | -------------------------------------------------------------------------------- |
+| 🔄 **Retry Automático**          | Exponential backoff, até 5 tentativas, tratamento robusto de falhas transitórias |
+| 📊 **Monitoramento Real-time**   | Verificação a cada 30s, métricas por serviço, tempo de resposta individual       |
+| ⚡ **Processamento Distribuído** | BullMQ para filas resilientes, múltiplos workers, jobs persistidos no Redis      |
+| 🔔 **Alertas Multi-Canal** ⭐    | Console • Webhook • Slack • Email (com threshold + cooldown + recuperação)       |
+| 📈 **Observabilidade**           | Prometheus metrics, health checks, logs estruturados                             |
+| 🐳 **Pronto para Produção**      | Docker Compose, graceful shutdown, sinais SIGINT/SIGTERM                         |
 
 ---
 
@@ -427,33 +398,42 @@ sla-guardian-worker  | 🎉 Job 1 concluído
 
 ## 🎓 Aprendizados & Conceitos Demonstrados
 
-**Arquitetura Distribuída**
+### 🏗️ Arquitetura Distribuída
 
-- Padrão Message Queue com BullMQ
+- Padrão Message Queue (BullMQ)
 - Desacoplamento de serviços
+- Event-driven architecture
+- Task scheduling com cron
 
-  **TypeScript & Type Safety**
+### 🛡️ Resiliência & Confiabilidade
 
-- Tipagem forte em todo o projeto
-- Melhor experiência de desenvolvimento
+- Retry automático com backoff exponencial
+- Tratamento de falhas transitórias
+- Graceful shutdown e sinais do sistema
+- Validação e error handling robusto
 
-  **Resiliência**
+### 📈 Observabilidade & Monitoramento
 
-- Retry automático
-- Backoff exponencial
-- Graceful shutdown
+- Prometheus metrics para análise
+- Health checks estruturados
+- Logs estruturados (Pino)
+- Rastreamento de performance
 
-  **Observabilidade**
+### 💻 Stack Técnico
 
-- Prometheus metrics
-- Structured logging
-- Health checks
+- **TypeScript** - Type-safe em 100% do código
+- **Express.js** - API REST escalável e segura
+- **BullMQ** - Processamento distribuído de jobs
+- **Redis** - Fila resiliente e broker de mensagens
+- **Docker** - Containerização e orquestração
+- **Prometheus** - Coleta e análise de métricas
 
-  **DevOps & Infrastructure**
+### 🚀 DevOps & Infrastructure
 
-- Docker & Docker Compose
-- Multi-container orchestration
-- Environment management
+- Docker & Docker Compose para multi-container
+- Environment management (.env)
+- CI/CD ready (sem dependências externas)
+- Configuration as Code
 
 ---
 
