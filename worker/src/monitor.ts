@@ -87,14 +87,18 @@ const worker = new Worker(
       throw new Error(result.error || "Falha no monitoramento");
     }
 
-    // Disparar alerta de recuperação se estava falhando
-    const status = alertManager.getStatus();
-    const serviceStatus = status.find((s) => s.service === url);
-    if (serviceStatus && serviceStatus.failures > 0) {
+    // ✅ Serviço OK - Verificar se estava falhando antes (recuperação)
+    const alertStatus = alertManager.getStatus();
+    const currentServiceStatus = alertStatus.find(
+      (s) => s.service === TARGET_URL,
+    );
+
+    if (currentServiceStatus && currentServiceStatus.failures > 0) {
+      // Estava falhando, agora recuperou!
       await alertManager.alert({
-        service: url,
+        service: TARGET_URL,
         status: "recovered",
-        message: `Serviço recuperado: ${url}`,
+        message: `Serviço recuperado: ${TARGET_URL}`,
         duration: result.duration,
         timestamp: new Date(),
       });
