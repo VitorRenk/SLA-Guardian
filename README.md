@@ -141,7 +141,7 @@ curl http://localhost:3000/metrics
 
 ---
 
-## 📡 Endpoints da API
+## Endpoints da API
 
 | Método | Endpoint   | Descrição                      | Status | Acesso                        |
 | ------ | ---------- | ------------------------------ | ------ | ----------------------------- |
@@ -169,7 +169,7 @@ curl http://localhost:3000/metrics
 
 ---
 
-## � Dashboard Grafana
+## Dashboard Grafana
 
 O SLA Guardian inclui um **dashboard pré-configurado** com visualização de métricas em tempo real.
 
