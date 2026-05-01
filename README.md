@@ -532,11 +532,3 @@ sla-guardian-worker  | 🎉 Job 1 concluído
 docker-compose down
 # ou Ctrl+C nos terminais
 ```
-
-## 📝 Próximos Passos
-
-- [ ] Adicionar métricas personalizadas do SLA (latência por endpoint)
-- [ ] Configurar alertas no Grafana
-- [ ] Integrar com Kubernetes para orquestração em produção
-- [ ] Implementar autoscaling de workers
-- [ ] Adicionar persistência de histórico de alertas
