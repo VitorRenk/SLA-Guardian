@@ -193,6 +193,21 @@ Senha: admin
 Dashboard: SLA Guardian - Performance Dashboard
 ```
 
+### Visualização do Dashboard
+
+<div align="center">
+  <table>
+    <tr>
+      <td align="center">
+        <img src="img/cpu.PNG" width="48%" alt="CPU Usage Dashboard">
+      </td>
+      <td align="center">
+        <img src="img/memory.PNG" width="48%" alt="Memory Usage Dashboard">
+      </td>
+    </tr>
+  </table>
+</div>
+
 ---
 
 Crie ou edite `.env` nos diretórios:
