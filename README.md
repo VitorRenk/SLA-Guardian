@@ -199,10 +199,10 @@ Dashboard: SLA Guardian - Performance Dashboard
   <table>
     <tr>
       <td align="center">
-        <img src="img/cpu.PNG" width="48%" alt="CPU Usage Dashboard">
+        <img src="img/cpu.PNG" width="100%" alt="CPU Usage Dashboard">
       </td>
       <td align="center">
-        <img src="img/memory.PNG" width="48%" alt="Memory Usage Dashboard">
+        <img src="img/memory.PNG" width="100%" alt="Memory Usage Dashboard">
       </td>
     </tr>
   </table>
