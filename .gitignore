@@ -46,3 +46,7 @@ temp/
 # Docker
 .docker/
 *.dockerignore
+
+# Prometheus/Grafana
+grafana/data/
+prometheus/data/
