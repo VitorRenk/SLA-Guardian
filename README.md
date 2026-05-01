@@ -6,6 +6,8 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0+-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker)](https://www.docker.com/)
 [![Redis](https://img.shields.io/badge/Redis-7+-red?logo=redis)](https://redis.io/)
+[![Prometheus](https://img.shields.io/badge/Prometheus-Latest-orange?logo=prometheus)](https://prometheus.io/)
+[![Grafana](https://img.shields.io/badge/Grafana-Latest-blue?logo=grafana)](https://grafana.com/)
 
 ---
 
@@ -24,40 +26,45 @@
 ## 🏗️ Arquitetura
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    SLA Guardian System                        │
-├─────────────────────────────────────────────────────────────┤
-│                                                               │
-│  ┌──────────────┐      ┌──────────────┐     ┌─────────────┐ │
-│  │   Express    │◄────►│    Redis     │◄───►│  BullMQ     │ │
-│  │     API      │      │   Message    │     │   Worker    │ │
-│  │              │      │    Broker    │     │             │ │
-│  └──────────────┘      └──────────────┘     └─────────────┘ │
-│       :3000                  :6379          Scheduler/Retry  │
-│                                                               │
-│  ┌─────────────────────────────────────────────────────────┐ │
-│  │  Prometheus Metrics │ Health Checks │ Observabilidade   │ │
-│  └─────────────────────────────────────────────────────────┘ │
-│                                                               │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│                    SLA Guardian System                                │
+├──────────────────────────────────────────────────────────────────────┤
+│                                                                       │
+│  ┌──────────────┐      ┌──────────────┐     ┌─────────────┐         │
+│  │   Express    │◄────►│    Redis     │◄───►│  BullMQ     │         │
+│  │     API      │      │   Message    │     │   Worker    │         │
+│  │              │      │    Broker    │     │             │         │
+│  └──────────────┘      └──────────────┘     └─────────────┘         │
+│       :3000                  :6379          Scheduler/Retry          │
+│       ↓                                                               │
+│  ┌──────────────┐      ┌──────────────┐     ┌─────────────┐         │
+│  │ Prometheus   │      │   Grafana    │     │  Dashboards │         │
+│  │   :9090      │◄─────│   :3001      │◄────│  & Alerts   │         │
+│  │              │      │              │     │             │         │
+│  └──────────────┘      └──────────────┘     └─────────────┘         │
+│  Coleta Métricas       Visualização         Performance Tracking    │
+│                                                                       │
+└──────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## 🚀 Tech Stack
 
-| Camada           | Tecnologia     | Propósito                 |
-| ---------------- | -------------- | ------------------------- |
-| **Runtime**      | Node.js 20     | Ambiente JavaScript       |
-| **Linguagem**    | TypeScript     | Type-safety e melhor DX   |
-| **API**          | Express.js     | Servidor HTTP             |
-| **Queue**        | BullMQ         | Processamento distribuído |
-| **Cache/PubSub** | Redis          | Fila, cache e broadcast   |
-| **Scheduler**    | node-cron      | Execução agendada         |
-| **HTTP Client**  | axios          | Requisições HTTP          |
-| **Monitoring**   | Prometheus     | Coleta de métricas        |
-| **Logging**      | Pino           | Logs estruturados         |
-| **Container**    | Docker Compose | Orquestração              |
+| Camada           | Tecnologia     | Propósito                  |
+| ---------------- | -------------- | -------------------------- |
+| **Runtime**      | Node.js 20     | Ambiente JavaScript        |
+| **Linguagem**    | TypeScript     | Type-safety e melhor DX    |
+| **API**          | Express.js     | Servidor HTTP              |
+| **Queue**        | BullMQ         | Processamento distribuído  |
+| **Cache/PubSub** | Redis          | Fila, cache e broadcast    |
+| **Scheduler**    | node-cron      | Execução agendada          |
+| **HTTP Client**  | axios          | Requisições HTTP           |
+| **Metrics**      | prom-client    | Exportação Prometheus      |
+| **Monitoring**   | Prometheus     | Coleta e armazenagem       |
+| **Dashboard**    | Grafana        | Visualização em tempo real |
+| **Logging**      | Pino           | Logs estruturados          |
+| **Container**    | Docker Compose | Orquestração               |
 
 ---
 
@@ -70,7 +77,7 @@
 | ⚡ **Processamento Distribuído** | BullMQ para filas resilientes, múltiplos workers, jobs persistidos no Redis      |
 | 🔔 **Alertas Multi-Canal** ⭐    | Console • Webhook • Slack • Email (com threshold + cooldown + recuperação)       |
 | 📈 **Observabilidade**           | Prometheus metrics, health checks, logs estruturados                             |
-| 🐳 **Pronto para Produção**      | Docker Compose, graceful shutdown, sinais SIGINT/SIGTERM                         |
+| � **Dashboard Grafana** ✨       | Visualização de performance, CPU, memória, taxa de requisições em tempo real     |
 
 ---
 
@@ -104,7 +111,9 @@ docker-compose up --build
 Serviços iniciados:
 
 - 🔵 **API**: http://localhost:3000
-- 📊 **Métricas**: http://localhost:3000/metrics
+- 📊 **Métricas Prometheus**: http://localhost:3000/metrics
+- 📈 **Prometheus**: http://localhost:9090
+- 📊 **Grafana Dashboard**: http://localhost:3001 (admin/admin)
 - 📮 **Redis**: localhost:6379
 
 ### Testar a API
@@ -112,23 +121,33 @@ Serviços iniciados:
 ```bash
 # Health check
 curl http://localhost:3000/health
+# {"status":"ok"}
 
 # Endpoint raiz
 curl http://localhost:3000/
+# {"message":"SLA Guardian API running 🚀"}
 
 # Métricas Prometheus
 curl http://localhost:3000/metrics
+# # HELP process_cpu_user_seconds_total Total user CPU time spent...
 ```
+
+### Acessar Grafana Dashboard
+
+1. Abra http://localhost:3001
+2. Login: **admin** / **admin**
+3. Navegue para **Dashboards → SLA Guardian - Performance Dashboard**
+4. Visualize métricas em tempo real de CPU, memória, requisições e status da API
 
 ---
 
 ## 📡 Endpoints da API
 
-| Método | Endpoint   | Descrição                      | Status |
-| ------ | ---------- | ------------------------------ | ------ |
-| GET    | `/health`  | Verificar saúde da API         | ✅ 200 |
-| GET    | `/`        | Informação geral da API        | ✅ 200 |
-| GET    | `/metrics` | Métricas em formato Prometheus | ✅ 200 |
+| Método | Endpoint   | Descrição                      | Status | Acesso                        |
+| ------ | ---------- | ------------------------------ | ------ | ----------------------------- |
+| GET    | `/health`  | Verificar saúde da API         | ✅ 200 | http://localhost:3000/health  |
+| GET    | `/`        | Informação geral da API        | ✅ 200 | http://localhost:3000/        |
+| GET    | `/metrics` | Métricas em formato Prometheus | ✅ 200 | http://localhost:3000/metrics |
 
 ### Exemplo de Resposta
 
@@ -150,7 +169,31 @@ curl http://localhost:3000/metrics
 
 ---
 
-## 🔧 Configuração
+## � Dashboard Grafana
+
+O SLA Guardian inclui um **dashboard pré-configurado** com visualização de métricas em tempo real.
+
+### Painéis Disponíveis
+
+| Painel            | Descrição                       | Métrica                                     |
+| ----------------- | ------------------------------- | ------------------------------------------- |
+| **CPU Usage**     | Uso de CPU em percentual        | `rate(process_cpu_seconds_total[5m]) * 100` |
+| **Memory Usage**  | Memória residente do processo   | `process_resident_memory_bytes`             |
+| **Request Rate**  | Taxa de requisições por segundo | `rate(http_requests_total[1m])`             |
+| **API Status**    | Indicador de saúde (UP/DOWN)    | `up{job="sla-guardian-api"}`                |
+| **Response Time** | Latência p95 e p99              | `histogram_quantile(0.95/0.99, ...)`        |
+| **Success Rate**  | Taxa de sucesso vs erros        | `http_requests_total{status=~"..."}`        |
+
+### Acesso ao Dashboard
+
+```
+URL: http://localhost:3001
+Usuário: admin
+Senha: admin
+Dashboard: SLA Guardian - Performance Dashboard
+```
+
+---
 
 Crie ou edite `.env` nos diretórios:
 
@@ -316,10 +359,52 @@ sla-guardian/
 │   ├── tsconfig.json
 │   └── .env
 │
-├── docker-compose.yml        # Orquestração
+├── grafana-provisioning/
+│   ├── datasources/
+│   │   └── prometheus.yml    # Data source Prometheus
+│   └── dashboards/
+│       ├── dashboards.yml
+│       └── sla-guardian-dashboard.json  # 📊 Dashboard pré-configurado
+│
+├── prometheus.yml            # Config scraping
+├── docker-compose.yml        # Orquestração com Prometheus + Grafana
 ├── .env.example
 ├── .gitignore
 └── README.md
+```
+
+---
+
+## 📈 Prometheus & Observabilidade
+
+O SLA Guardian exporta métricas em formato Prometheus padrão, permitindo integração com qualquer sistema de monitoramento.
+
+### Scraping Automático
+
+Prometheus está configurado para scrappear métricas a cada **15 segundos** da API:
+
+```yaml
+# prometheus.yml
+scrape_configs:
+  - job_name: "sla-guardian-api"
+    static_configs:
+      - targets: ["api:3000"]
+    metrics_path: "/metrics"
+    scrape_interval: 15s
+```
+
+### Métricas Coletadas
+
+- **Node.js Runtime**: CPU, memória, garbage collection, event loop
+- **HTTP**: Requisições, latência, status codes
+- **Custom**: (Pronto para expandir com métricas de negócio)
+
+### Acesso ao Prometheus
+
+```
+URL: http://localhost:9090
+Query: Explore métricas em tempo real
+Alertas: Configure alertas baseados em thresholds
 ```
 
 ---
@@ -425,28 +510,21 @@ sla-guardian-worker  | 🎉 Job 1 concluído
 - **Express.js** - API REST escalável e segura
 - **BullMQ** - Processamento distribuído de jobs
 - **Redis** - Fila resiliente e broker de mensagens
-- **Docker** - Containerização e orquestração
 - **Prometheus** - Coleta e análise de métricas
+- **Grafana** - Visualização em dashboard
+- **Docker** - Containerização e orquestração
 
 ### 🚀 DevOps & Infrastructure
 
 - Docker & Docker Compose para multi-container
+- Prometheus para scraping automático de métricas
+- Grafana com dashboard pré-configurado
 - Environment management (.env)
 - CI/CD ready (sem dependências externas)
 - Configuration as Code
+- Provisioning automático de data sources e dashboards
 
 ---
-
-## 📊 Estrutura
-
-```
-sla-guardian/
-├── api/ # Express API + Prometheus metrics
-├── worker/ # BullMQ + Cron + Monitoramento
-├── docker-compose.yml
-└── .env.example
-
-```
 
 ## 🛑 Parar Serviços
 
@@ -454,3 +532,11 @@ sla-guardian/
 docker-compose down
 # ou Ctrl+C nos terminais
 ```
+
+## 📝 Próximos Passos
+
+- [ ] Adicionar métricas personalizadas do SLA (latência por endpoint)
+- [ ] Configurar alertas no Grafana
+- [ ] Integrar com Kubernetes para orquestração em produção
+- [ ] Implementar autoscaling de workers
+- [ ] Adicionar persistência de histórico de alertas

@@ -30,3 +30,41 @@ services:
     depends_on:
       - redis
     restart: always
+
+  # 📊 PROMETHEUS - Coleta métricas
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: sla-guardian-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+    depends_on:
+      - api
+    restart: always
+
+  # 📈 GRAFANA - Dashboard
+  grafana:
+    image: grafana/grafana:latest
+    container_name: sla-guardian-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana-provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana-provisioning/dashboards:/etc/grafana/provisioning/dashboards
+    depends_on:
+      - prometheus
+    restart: always
+
+volumes:
+  prometheus-data:
+  grafana-data:
