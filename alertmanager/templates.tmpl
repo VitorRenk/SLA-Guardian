@@ -1,0 +1,74 @@
+{{ define "slack.default.title" -}}
+{{ .GroupLabels.alertname }}
+{{- end }}
+
+{{ define "slack.default.text" -}}
+{{ range .Alerts.Firing -}}
+*Alerta:* {{ .Labels.alertname }}
+*Serviço:* {{ .Labels.service | default "N/A" }}
+*Severidade:* {{ .Labels.severity | default "unknown" }}
+*Descrição:* {{ .Annotations.description }}
+*Detalhes:* {{ .Annotations.summary }}
+*Início:* {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+---
+{{ end }}
+{{ if .Alerts.Resolved -}}
+*Alertas Resolvidos:*
+{{ range .Alerts.Resolved -}}
+✅ {{ .Labels.alertname }} - {{ .EndsAt.Format "2006-01-02 15:04:05" }}
+{{ end }}
+{{- end }}
+{{- end }}
+
+{{ define "email.default.subject" -}}
+[{{ .Status | upper }}] {{ .GroupLabels.alertname }}
+{{- end }}
+
+{{ define "email.default.html" -}}
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #f5f5f5; }
+    .container { max-width: 600px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 5px; }
+    .header { background-color: #f0f0f0; padding: 10px; border-left: 5px solid #ff6b6b; margin-bottom: 20px; }
+    .alert-item { margin-bottom: 15px; padding: 10px; border-left: 4px solid #ff6b6b; background-color: #fff5f5; }
+    .resolved-item { border-left-color: #51cf66; background-color: #f1fdf5; }
+    .label { font-weight: bold; color: #333; }
+    .footer { margin-top: 20px; color: #666; font-size: 12px; border-top: 1px solid #ddd; padding-top: 10px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h2>🚨 SLA Guardian - Notificação de Alerta</h2>
+      <p><strong>Status:</strong> {{ .Status | upper }}</p>
+    </div>
+
+    {{ range .Alerts.Firing }}
+    <div class="alert-item">
+      <p><span class="label">Alerta:</span> {{ .Labels.alertname }}</p>
+      <p><span class="label">Serviço:</span> {{ .Labels.service | default "N/A" }}</p>
+      <p><span class="label">Severidade:</span> {{ .Labels.severity | default "unknown" }}</p>
+      <p><span class="label">Descrição:</span> {{ .Annotations.description }}</p>
+      <p><span class="label">Detalhes:</span> {{ .Annotations.summary }}</p>
+      <p><span class="label">Início:</span> {{ .StartsAt.Format "2006-01-02 15:04:05" }}</p>
+    </div>
+    {{ end }}
+
+    {{ range .Alerts.Resolved }}
+    <div class="alert-item resolved-item">
+      <p>✅ <strong>Alerta Resolvido:</strong> {{ .Labels.alertname }}</p>
+      <p><span class="label">Fim:</span> {{ .EndsAt.Format "2006-01-02 15:04:05" }}</p>
+    </div>
+    {{ end }}
+
+    <div class="footer">
+      <p>SLA Guardian - Sistema de Monitoramento em Tempo Real</p>
+      <p>Este é um alerta automatizado. Por favor não responda este email.</p>
+    </div>
+  </div>
+</body>
+</html>
+{{- end }}

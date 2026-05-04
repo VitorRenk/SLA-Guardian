@@ -424,6 +424,130 @@ Alertas: Configure alertas baseados em thresholds
 
 ---
 
+## 🔔 Alertas Inteligentes no Grafana ⭐ **NOVO!**
+
+O SLA Guardian agora inclui um sistema completo de alertas integrado com Prometheus e Alertmanager, permitindo notificações em múltiplos canais.
+
+### Arquitetura de Alertas
+
+```
+Prometheus (regras)
+    ↓
+Alertmanager (roteamento)
+    ↓
+Slack | Email | Webhook | Grafana
+```
+
+### Alertas Pré-configurados
+
+| Alerta                    | Condição                      | Severidade | Ação          |
+| ------------------------- | ----------------------------- | ---------- | ------------- |
+| 🔴 API Unresponsive       | API offline > 2 min           | Crítico    | Slack + Email |
+| 🟠 High Error Rate        | Taxa de erro > 5% por 5 min   | Aviso      | Slack         |
+| 🟠 High Latency           | P95 latência > 1s por 5 min   | Aviso      | Slack         |
+| 🔴 Critical Latency       | P99 latência > 5s por 2 min   | Crítico    | Slack + Email |
+| 🟠 High Memory Usage      | Memória > 85% por 10 min      | Aviso      | Slack         |
+| 🟠 High CPU Usage         | CPU > 80% por 10 min          | Aviso      | Slack         |
+| ℹ️ Unusual Traffic        | Requisições > 100/s por 5 min | Info       | Slack         |
+| 🔴 Multiple Services Down | 2+ serviços offline por 1 min | Crítico    | Escalação     |
+
+### Configurar Notificações por Slack
+
+1. **Criar Webhook do Slack**:
+   - Acesse: https://api.slack.com/apps
+   - Crie uma app: "SLA Guardian Alerts"
+   - Vá para: **Incoming Webhooks** → **Add New Webhook**
+   - Selecione canal: #alerts
+   - Copie a URL
+
+2. **Configurar no Alertmanager**:
+   - Edite `.env` ou `.env.alerts.example`:
+     ```bash
+     SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/WEBHOOK/URL
+     ```
+
+3. **Reiniciar Alertmanager**:
+   ```bash
+   docker-compose restart alertmanager
+   ```
+
+### Configurar Notificações por Email
+
+1. **Gmail com App Password**:
+   - Ative 2-Step Verification em: https://myaccount.google.com/security
+   - Vá para: https://myaccount.google.com/apppasswords
+   - Gere app password para Mail
+   - Copie a senha
+
+2. **Configurar no `.env`**:
+   ```bash
+   SMTP_PASSWORD=xxxx xxxx xxxx xxxx
+   SMTP_USER=seu-email@gmail.com
+   ALERT_EMAIL=admin@example.com
+   ```
+
+### Webhook Customizado
+
+Configure um endpoint próprio para receber alertas:
+
+```bash
+WEBHOOK_URL=https://seu-servidor.com/webhooks/alerts
+```
+
+Payload recebido:
+
+```json
+{
+  "status": "firing",
+  "alerts": [
+    {
+      "status": "firing",
+      "labels": {
+        "alertname": "APIUnresponsive",
+        "severity": "critical"
+      },
+      "annotations": {
+        "summary": "API não está respondendo",
+        "description": "API em api:3000 offline > 2 min"
+      }
+    }
+  ]
+}
+```
+
+### Interfaces de Alerta
+
+| Serviço      | URL                          | Descrição                          |
+| ------------ | ---------------------------- | ---------------------------------- |
+| Prometheus   | http://localhost:9090/alerts | Ver alertas disparados             |
+| Alertmanager | http://localhost:9093        | Gerenciar alertas e silenciamentos |
+| Grafana      | http://localhost:3001        | Dashboard + histórico de alertas   |
+
+### Testar Alertas
+
+```bash
+# Ver script de teste
+bash guides/test-alerts-grafana.sh
+
+# Simular falha da API (vai disparar alerta)
+docker-compose stop api
+# Esperar 2+ minutos...
+docker-compose start api
+```
+
+### Documentação Completa
+
+Veja [Guia de Alertas no Grafana](./guides/ALERTS_GRAFANA.md) para:
+
+- ✅ Configuração passo-a-passo
+- ✅ Integrações com Discord, Teams, PagerDuty
+- ✅ Templates de mensagens customizadas
+- ✅ Silenciamento de alertas
+- ✅ Regras de inibição (evitar duplicatas)
+- ✅ Troubleshooting
+
+---
+
 ## 🧪 Desenvolvimento Local (sem Docker)
 
 ### Terminal 1 - Redis

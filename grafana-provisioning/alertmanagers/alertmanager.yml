@@ -1,0 +1,11 @@
+apiVersion: 1
+
+alertmanagers:
+  - name: Prometheus
+    type: prometheus
+    uid: prometheus
+    orgId: 1
+    url: http://prometheus:9090
+    access: proxy
+    isDefault: true
+    editable: true

@@ -1,0 +1,138 @@
+# 🔔 Regras de Alertas do Prometheus
+# Define condições para disparar alertas
+
+groups:
+  - name: sla_guardian_alerts
+    interval: 30s
+    rules:
+      # 🔴 CRÍTICO: API Não Responsiva
+      - alert: APIUnresponsive
+        expr: up{job="sla-guardian-api"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          alertgroup: sla
+        annotations:
+          summary: "API SLA Guardian não está respondendo"
+          description: "A API em {{ $labels.instance }} não respondeu nos últimos 2 minutos"
+          impact: "Serviço de monitoramento indisponível"
+          action: "Verificar status da API e logs"
+
+      # 🟠 AVISO: Taxa de Erro Elevada
+      - alert: HighErrorRate
+        expr: |
+          (
+            sum(rate(http_requests_total{status=~"5.."}[5m]))
+            /
+            sum(rate(http_requests_total[5m]))
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          alertgroup: sla
+        annotations:
+          summary: "Taxa de erro elevada (> 5%)"
+          description: "Taxa de erro da API está em {{ $value | humanizePercentage }}"
+          impact: "API retornando muitos erros"
+          action: "Investigar causa dos erros nos logs"
+
+      # 🟠 AVISO: Latência Elevada
+      - alert: HighLatency
+        expr: |
+          histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+          alertgroup: performance
+        annotations:
+          summary: "Latência P95 elevada (> 1s)"
+          description: "Latência P95: {{ $value | humanizeDuration }}"
+          impact: "Respostas da API mais lentas"
+          action: "Verificar carga do servidor e database"
+
+      # 🔴 CRÍTICO: Latência Muito Elevada
+      - alert: CriticalLatency
+        expr: |
+          histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m])) > 5
+        for: 2m
+        labels:
+          severity: critical
+          alertgroup: performance
+        annotations:
+          summary: "Latência P99 crítica (> 5s)"
+          description: "Latência P99: {{ $value | humanizeDuration }}"
+          impact: "API muito lenta, usuários impactados"
+          action: "Escalar para time de infra imediatamente"
+
+      # 🟠 AVISO: Uso de Memória Alto
+      - alert: HighMemoryUsage
+        expr: |
+          (process_resident_memory_bytes{job="sla-guardian-api"} / (512 * 1024 * 1024)) > 0.85
+        for: 10m
+        labels:
+          severity: warning
+          alertgroup: performance
+        annotations:
+          summary: "Uso de memória > 85%"
+          description: "Memória: {{ $value | humanizePercentage }}"
+          impact: "API pode ficar indisponível por OOM"
+          action: "Monitorar e considerar restart se necessário"
+
+      # 🟠 AVISO: Uso de CPU Alto
+      - alert: HighCPUUsage
+        expr: |
+          rate(process_cpu_seconds_total{job="sla-guardian-api"}[5m]) > 0.8
+        for: 10m
+        labels:
+          severity: warning
+          alertgroup: performance
+        annotations:
+          summary: "Uso de CPU > 80%"
+          description: "CPU: {{ $value | humanizePercentage }}"
+          impact: "Performance degradada"
+          action: "Investigar picos de processamento"
+
+      # ℹ️ INFO: Taxa de Requisições Anormalmente Alta
+      - alert: UnusualTraffic
+        expr: |
+          rate(http_requests_total[5m]) > 100
+        for: 5m
+        labels:
+          severity: info
+          alertgroup: sla
+        annotations:
+          summary: "Taxa de requisições elevada"
+          description: "{{ $value | humanize }} requisições/s"
+          impact: "Possível pico de tráfego ou ataque"
+          action: "Monitorar em caso de pico"
+
+  - name: sla_guardian_consolidated
+    interval: 1m
+    rules:
+      # 🔴 CRÍTICO: Múltiplas Falhas Simultâneas
+      - alert: MultipleServicesDown
+        expr: |
+          count(up == 0) >= 2
+        for: 1m
+        labels:
+          severity: critical
+          alertgroup: sla
+        annotations:
+          summary: "{{ $value }} serviços estão offline"
+          description: "Múltiplos serviços não estão respondendo"
+          impact: "Possível falha de infraestrutura"
+          action: "Escalar para o time de SRE"
+
+      # 🔔 Notificação: Sistema Totalmente Funcional
+      - alert: AllSystemsHealthy
+        expr: |
+          count(up) == count(up{job=~"sla-guardian-.*"})
+        for: 5m
+        labels:
+          severity: info
+          alertgroup: sla
+        annotations:
+          summary: "✅ Todos os sistemas estão saudáveis"
+          description: "Todos os serviços monitorados estão respondendo normalmente"
+          impact: "Nenhum"
+          action: "Nenhuma ação necessária"

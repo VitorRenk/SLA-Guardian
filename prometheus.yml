@@ -1,8 +1,20 @@
 global:
   scrape_interval: 15s
-  evaluation_interval: 15s
+  evaluation_interval: 30s
   external_labels:
     monitor: "sla-guardian"
+
+# 🔔 Configuração de Alertmanager
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ["alertmanager:9093"]
+      scheme: http
+      timeout: 10s
+
+# 📋 Carregar regras de alerta
+rule_files:
+  - "prometheus-rules.yml"
 
 scrape_configs:
   - job_name: "sla-guardian-api"

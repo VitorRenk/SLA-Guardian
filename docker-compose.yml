@@ -61,10 +61,31 @@ services:
       - grafana-data:/var/lib/grafana
       - ./grafana-provisioning/datasources:/etc/grafana/provisioning/datasources
       - ./grafana-provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana-provisioning/alertmanagers:/etc/grafana/provisioning/alertmanagers
     depends_on:
       - prometheus
+    restart: always
+
+  # 🔔 ALERTMANAGER - Gerencia notificações de alertas
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: sla-guardian-alertmanager
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./alertmanager/config.yml:/etc/alertmanager/config.yml
+      - ./alertmanager/templates.tmpl:/etc/alertmanager/templates/templates.tmpl
+      - alertmanager-data:/alertmanager
+    command:
+      - "--config.file=/etc/alertmanager/config.yml"
+      - "--storage.path=/alertmanager"
+    environment:
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL:-}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
+      - WEBHOOK_URL=${WEBHOOK_URL:-}
     restart: always
 
 volumes:
   prometheus-data:
   grafana-data:
+  alertmanager-data:
