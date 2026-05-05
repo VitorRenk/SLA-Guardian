@@ -13,13 +13,17 @@
 
 ## 📋 Sobre o Projeto
 
-**SLA Guardian** é uma solução robusta e escalável para monitorar a disponibilidade de serviços em tempo real. Desenvolvido com foco em confiabilidade, o projeto implementa um sistema distribuído que:
+**SLA Guardian** é uma solução robusta e escalável que combina **monitoramento em tempo real** com **práticas de MLOps**. O projeto implementa um sistema distribuído que:
 
 ✅ Monitora múltiplos endpoints simultaneamente  
 ✅ Implementa retry automático com backoff exponencial  
-✅ Coleta métricas via Prometheus  
+✅ Coleta métricas via Prometheus para análise contínua  
 ✅ Processa jobs de forma assíncrona e distribuída  
-✅ Fornece alertas e observabilidade
+✅ Fornece alertas e observabilidade  
+✅ **Transforma métricas em dados para treinamento de modelos**  
+✅ **Implementa versionamento de modelos com MLflow**  
+✅ **Deploy via containers com monitoramento contínuo**  
+✅ **Cria ciclos de melhoria baseados em dados reais**
 
 ---
 
@@ -70,14 +74,16 @@
 
 ## ✨ Features Principais
 
-| Recurso                          | Descrição                                                                        |
-| -------------------------------- | -------------------------------------------------------------------------------- |
-| 🔄 **Retry Automático**          | Exponential backoff, até 5 tentativas, tratamento robusto de falhas transitórias |
-| 📊 **Monitoramento Real-time**   | Verificação a cada 30s, métricas por serviço, tempo de resposta individual       |
-| ⚡ **Processamento Distribuído** | BullMQ para filas resilientes, múltiplos workers, jobs persistidos no Redis      |
-| 🔔 **Alertas Multi-Canal** ⭐    | Console • Webhook • Slack • Email (com threshold + cooldown + recuperação)       |
-| 📈 **Observabilidade**           | Prometheus metrics, health checks, logs estruturados                             |
-| � **Dashboard Grafana** ✨       | Visualização de performance, CPU, memória, taxa de requisições em tempo real     |
+| Recurso                           | Descrição                                                                        |
+| --------------------------------- | -------------------------------------------------------------------------------- | --- | ------------------------------- | ------------------------------------------------------------------- |
+| 🔄 **Retry Automático**           | Exponential backoff, até 5 tentativas, tratamento robusto de falhas transitórias |
+| 📊 **Monitoramento Real-time**    | Verificação a cada 30s, métricas por serviço, tempo de resposta individual       |
+| ⚡ **Processamento Distribuído**  | BullMQ para filas resilientes, múltiplos workers, jobs persistidos no Redis      |
+| 🔔 **Alertas Multi-Canal** ⭐     | Console • Webhook • Slack • Email (com threshold + cooldown + recuperação)       |
+| 📈 **Observabilidade**            | Prometheus metrics, health checks, logs estruturados                             |
+| � **Dashboard Grafana** ✨        | Visualização de performance, CPU, memória, taxa de requisições em tempo real     |     | 🤖 **MLOps & Machine Learning** | Treinamento de modelos com métricas reais, versionamento com MLflow |
+| 📦 **Model Versioning**           | Versionamento automático de modelos, rastreamento de performance                 |
+| 🔄 **Ciclo de Melhoria Contínua** | Pipeline que coleta dados → treina → valida → deploya modelos                    |
 
 ---
 
@@ -209,6 +215,101 @@ Dashboard: SLA Guardian - Performance Dashboard
 </div>
 
 ---
+
+## 🤖 Pipeline MLOps - Ciclo Contínuo de Inteligência
+
+No SLA Guardian, apliquei **práticas de MLOps** ao transformar métricas de monitoramento em dados para treinamento de modelos. O sistema implementa:
+
+### 📊 Arquitetura MLOps
+
+```
+Métricas (Prometheus)
+    ↓
+Coleta de Dados (Feature Store)
+    ↓
+Preparação & Transformação
+    ↓
+Treinamento de Modelos (MLflow)
+    ↓
+Versionamento & Registry
+    ↓
+Deploy em Containers
+    ↓
+Monitoramento (Prometheus/Grafana)
+    ↓
+Retroalimentação → Retrainamento
+```
+
+### 🔄 Ciclo Contínuo de Melhoria
+
+1. **Coleta de Dados**: Métricas em tempo real são persistidas como features
+   - CPU usage, memory, latency, error rates
+   - Response times, throughput, uptime
+
+2. **Treinamento de Modelos**: MLflow controla versionamento de modelos
+   - Experimentos rastreados com parâmetros e métricas
+   - Modelos persistidos com histórico completo
+   - Comparação automática de performance
+
+3. **Validação**: Modelos são testados antes do deploy
+   - Métricas de acurácia, precisão, recall
+   - Cross-validation com dados reais
+
+4. **Deploy**: Modelos são containerizados com a API
+   - Versionamento semântico
+   - Rollback automático se performance cai
+
+5. **Monitoramento**: Performance do modelo é rastreada
+   - Drift detection em produção
+   - Alertas se acurácia cai abaixo de threshold
+
+6. **Retroalimentação**: Dados novos alimentam próximo treinamento
+   - Ciclo contínuo de melhoria baseado em dados reais
+
+### 📋 Recursos MLOps
+
+| Recurso                 | Descrição                                        |
+| ----------------------- | ------------------------------------------------ |
+| **MLflow Tracking**     | Experimentos, parâmetros, métricas versionados   |
+| **Model Registry**      | Histórico completo de modelos com estágios       |
+| **Feature Engineering** | Transformação automática de métricas em features |
+| **Data Versioning**     | Rastreamento de datasets usados no treinamento   |
+| **Model Evaluation**    | Validação cross-dataset e drift detection        |
+| **CI/CD ML**            | Pipeline automatizado de treinamento e deploy    |
+| **Container Registry**  | Versionamento de imagens Docker com modelos      |
+| **Prometheus Metrics**  | Observabilidade do modelo em produção            |
+
+### 🔗 Integração com Stack Existente
+
+- **Prometheus**: Fornece fonte de dados para ML
+- **Grafana**: Visualiza métricas do modelo e performance
+- **Docker**: Empacota modelos com a aplicação
+- **Redis**: Cache de features para low-latency inference
+- **BullMQ**: Queue para jobs de retrainamento
+
+### 💾 Exemplo: Predição de Falhas com Base em Padrões
+
+```python
+# Dados coletados pelo SLA Guardian
+features = {
+    "cpu_usage_mean_5m": 45.2,
+    "memory_usage_trend": 0.8,
+    "request_rate": 1250,
+    "error_rate_5m": 0.02,
+    "latency_p95": 250,
+    "uptime_pct": 99.8
+}
+
+# Modelo MLflow prediz probabilidade de falha
+predictions = model.predict(features)
+# output: {"failure_probability": 0.12, "confidence": 0.94}
+
+# Se probabilidade > 0.3, dispara alerta preventivo
+```
+
+---
+
+## ⚙️ Configuração
 
 Crie ou edite `.env` nos diretórios:
 
@@ -643,6 +744,15 @@ sla-guardian-worker  | 🎉 Job 1 concluído
 - Logs estruturados (Pino)
 - Rastreamento de performance
 
+### 🤖 MLOps & Data Science
+
+- **Transformação de Métricas em Dados**: Coleta contínua de métricas de monitoramento convertidas em features para ML
+- **Versionamento de Modelos**: Implementação com MLflow para rastreamento de experimentos e versões
+- **Pipeline de Treinamento**: Automação de coleta de dados → preparação → treinamento → validação
+- **Monitoramento de Performance**: Prometheus e Grafana rastreiam métricas do modelo em produção
+- **Ciclo Contínuo de Melhoria**: Retroalimentação baseada em dados reais para retrainamento automático
+- **Model Registry**: Versionamento e gerenciamento de modelos com rastreabilidade completa
+
 ### 💻 Stack Técnico
 
 - **TypeScript** - Type-safe em 100% do código
@@ -652,16 +762,19 @@ sla-guardian-worker  | 🎉 Job 1 concluído
 - **Prometheus** - Coleta e análise de métricas
 - **Grafana** - Visualização em dashboard
 - **Docker** - Containerização e orquestração
+- **MLflow** - Versionamento e tracking de modelos ML
+- **Python** - Pipelines de ML e data science
 
-### 🚀 DevOps & Infrastructure
+### 🚀 DevOps & Infrastructure as Code
 
 - Docker & Docker Compose para multi-container
 - Prometheus para scraping automático de métricas
 - Grafana com dashboard pré-configurado
 - Environment management (.env)
-- CI/CD ready (sem dependências externas)
+- CI/CD ready com suporte a modelos ML
 - Configuration as Code
 - Provisioning automático de data sources e dashboards
+- MLOps pipeline integrado ao monitoramento
 
 ---
 
