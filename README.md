@@ -424,7 +424,7 @@ Alertas: Configure alertas baseados em thresholds
 
 ---
 
-## 🔔 Alertas Inteligentes no Grafana ⭐ **NOVO!**
+## 🔔 Alertas Inteligentes no Grafana
 
 O SLA Guardian agora inclui um sistema completo de alertas integrado com Prometheus e Alertmanager, permitindo notificações em múltiplos canais.
 
