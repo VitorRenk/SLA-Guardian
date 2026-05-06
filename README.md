@@ -72,21 +72,6 @@
 
 ---
 
-## ✨ Features Principais
-
-| Recurso                           | Descrição                                                                        |
-| --------------------------------- | -------------------------------------------------------------------------------- | --- | ------------------------------- | ------------------------------------------------------------------- |
-| 🔄 **Retry Automático**           | Exponential backoff, até 5 tentativas, tratamento robusto de falhas transitórias |
-| 📊 **Monitoramento Real-time**    | Verificação a cada 30s, métricas por serviço, tempo de resposta individual       |
-| ⚡ **Processamento Distribuído**  | BullMQ para filas resilientes, múltiplos workers, jobs persistidos no Redis      |
-| 🔔 **Alertas Multi-Canal** ⭐     | Console • Webhook • Slack • Email (com threshold + cooldown + recuperação)       |
-| 📈 **Observabilidade**            | Prometheus metrics, health checks, logs estruturados                             |
-| � **Dashboard Grafana** ✨        | Visualização de performance, CPU, memória, taxa de requisições em tempo real     |     | 🤖 **MLOps & Machine Learning** | Treinamento de modelos com métricas reais, versionamento com MLflow |
-| 📦 **Model Versioning**           | Versionamento automático de modelos, rastreamento de performance                 |
-| 🔄 **Ciclo de Melhoria Contínua** | Pipeline que coleta dados → treina → valida → deploya modelos                    |
-
----
-
 ## 🚀 Quick Start
 
 ### Pré-requisitos
@@ -777,10 +762,3 @@ sla-guardian-worker  | 🎉 Job 1 concluído
 - MLOps pipeline integrado ao monitoramento
 
 ---
-
-## 🛑 Parar Serviços
-
-```bash
-docker-compose down
-# ou Ctrl+C nos terminais
-```
