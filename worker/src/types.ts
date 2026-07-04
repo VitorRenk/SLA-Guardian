@@ -9,7 +9,7 @@ export interface ServiceCheckResult {
   error?: string;
 }
 
-export interface AlertStatus {
+export interface AlertState {
   service: string;
   failures: number;
   lastAlert?: Date;

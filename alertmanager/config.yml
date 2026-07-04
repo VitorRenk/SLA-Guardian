@@ -1,114 +1,52 @@
-# 🔔 Alertmanager Configuration
-# Gerencia roteamento e notificações de alertas
-
 global:
   resolve_timeout: 5m
-  slack_api_url: "${SLACK_WEBHOOK_URL}"
 
-# Define os templates de mensagens
 templates:
   - "/etc/alertmanager/templates/*.tmpl"
 
-# Rota padrão - define para onde os alertas são enviados
 route:
-  # Receptor padrão
   receiver: "default"
-
-  # Tempo mínimo entre alertas do mesmo grupo
+  group_by: ["alertname", "cluster", "service"]
   group_wait: 10s
   group_interval: 10s
   repeat_interval: 1h
-
-  # Sub-rotas para casos específicos
   routes:
-    # Alertas críticos
-    - match:
-        severity: critical
+    - matchers:
+        - severity="critical"
       receiver: "critical"
       group_wait: 5s
       group_interval: 5s
       repeat_interval: 30m
 
-    # Alertas de SLA
-    - match:
-        alertgroup: sla
+    - matchers:
+        - alertgroup="sla"
       receiver: "sla-alerts"
       group_wait: 10s
       group_interval: 10s
       repeat_interval: 1h
 
-    # Alertas de performance
-    - match:
-        alertgroup: performance
+    - matchers:
+        - alertgroup="performance"
       receiver: "performance-alerts"
       group_wait: 1m
       group_interval: 10m
       repeat_interval: 4h
 
-# Definição dos receptores (canais de notificação)
 receivers:
-  # Receptor padrão - Console
   - name: "default"
-    webhook_configs:
-      - url: "http://localhost:5001/"
-        send_resolved: true
-
-  # Receptor crítico - Slack + Email
   - name: "critical"
-    slack_configs:
-      - channel: "#critical-alerts"
-        title: "🔴 ALERTA CRÍTICO"
-        text: "{{ range .Alerts }}{{ .Annotations.description }}{{ end }}"
-        send_resolved: true
-        color: "danger"
-    email_configs:
-      - to: "admin@example.com"
-        from: "alertmanager@example.com"
-        smarthost: "smtp.gmail.com:587"
-        auth_username: "your-email@gmail.com"
-        auth_password: "${SMTP_PASSWORD}"
-        headers:
-          Subject: "[CRÍTICO] {{ .GroupLabels.alertname }}"
-
-  # Receptor de alertas de SLA
   - name: "sla-alerts"
-    slack_configs:
-      - channel: "#sla-alerts"
-        title: "⚠️ Alerta de SLA"
-        text: "{{ range .Alerts }}{{ .Annotations.description }}{{ end }}"
-        send_resolved: true
-        color: "warning"
-    webhook_configs:
-      - url: "${WEBHOOK_URL}/sla-alerts"
-        send_resolved: true
-
-  # Receptor de alertas de performance
   - name: "performance-alerts"
-    slack_configs:
-      - channel: "#performance-alerts"
-        title: "📊 Alerta de Performance"
-        text: "{{ range .Alerts }}{{ .Annotations.description }}{{ end }}"
-        send_resolved: true
-        color: "good"
 
-# Agrupar alertas por labels
-groupby:
-  - alertname
-  - cluster
-  - service
-
-# Evitar duplicatas
 inhibit_rules:
-  # Não enviar alertas de warning se crítico está ativo
-  - source_match:
-      severity: "critical"
-    target_match:
-      severity: "warning"
+  - source_matchers:
+      - severity="critical"
+    target_matchers:
+      - severity="warning"
     equal: ["alertname", "service"]
 
-  # Não enviar alertas de info se warning está ativo
-  - source_match:
-      severity: "warning"
-    target_match:
-      severity: "info"
+  - source_matchers:
+      - severity="warning"
+    target_matchers:
+      - severity="info"
     equal: ["alertname", "service"]
