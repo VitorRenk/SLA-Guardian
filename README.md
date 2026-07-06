@@ -1,764 +1,295 @@
 # SLA Guardian
 
-> **Sistema de Monitoramento e Garantia de SLA em Tempo Real**
+> Monitoramento de disponibilidade, métricas e alertas para serviços HTTP.
 
-[![Node.js](https://img.shields.io/badge/Node.js-20+-green?logo=node.js)](https://nodejs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-6.0+-blue?logo=typescript)](https://www.typescriptlang.org/)
-[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker)](https://www.docker.com/)
-[![Redis](https://img.shields.io/badge/Redis-7+-red?logo=redis)](https://redis.io/)
-[![Prometheus](https://img.shields.io/badge/Prometheus-Latest-orange?logo=prometheus)](https://prometheus.io/)
-[![Grafana](https://img.shields.io/badge/Grafana-Latest-blue?logo=grafana)](https://grafana.com/)
+[![Node.js](https://img.shields.io/badge/Node.js-20+-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-6+-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
+[![Redis](https://img.shields.io/badge/Redis-7+-DC382D?logo=redis&logoColor=white)](https://redis.io/)
+[![Prometheus](https://img.shields.io/badge/Prometheus-Metrics-E6522C?logo=prometheus&logoColor=white)](https://prometheus.io/)
+[![Grafana](https://img.shields.io/badge/Grafana-Dashboard-F46800?logo=grafana&logoColor=white)](https://grafana.com/)
 
----
+## Sobre o projeto
 
-## 📋 Sobre o Projeto
+SLA Guardian é um projeto de observabilidade construído com TypeScript, Docker, Redis, Prometheus e Grafana. Ele monitora uma URL alvo periodicamente, registra métricas reais sobre disponibilidade e tempo de resposta, e oferece uma stack completa para visualização e alertas.
 
-**SLA Guardian** é uma solução robusta e escalável que combina **monitoramento em tempo real** com **práticas de MLOps**. O projeto implementa um sistema distribuído que:
+O objetivo é demonstrar, de forma prática, conceitos importantes de backend e DevOps: processamento assíncrono, filas, retry com backoff, coleta de métricas, dashboards provisionados e alertas.
 
-✅ Monitora múltiplos endpoints simultaneamente  
-✅ Implementa retry automático com backoff exponencial  
-✅ Coleta métricas via Prometheus para análise contínua  
-✅ Processa jobs de forma assíncrona e distribuída  
-✅ Fornece alertas e observabilidade  
-✅ **Transforma métricas em dados para treinamento de modelos**  
-✅ **Implementa versionamento de modelos com MLflow**  
-✅ **Deploy via containers com monitoramento contínuo**  
-✅ **Cria ciclos de melhoria baseados em dados reais**
+## O que o projeto faz
 
----
+- Monitora uma URL configurável por meio da variável `TARGET_URL`.
+- Executa checagens automáticas a cada 30 segundos.
+- Processa verificações em background com BullMQ e Redis.
+- Aplica retry automático com backoff exponencial em caso de falha.
+- Expõe métricas Prometheus da API interna e do alvo monitorado.
+- Disponibiliza dashboard Grafana já provisionado.
+- Inclui regras de alerta no Prometheus e integração com Alertmanager.
+- Suporta notificações por console, webhook e Slack.
 
-## 🏗️ Arquitetura
+## Arquitetura
 
+```txt
+URL monitorada
+      |
+      v
++------------------+      +----------------+
+| Worker + BullMQ  |----->| /metrics 3002  |
+| checks + retries |      +----------------+
++--------+---------+
+         |
+         v
++------------------+
+| Redis 6379       |
+| fila de jobs     |
++------------------+
+
++------------------+      +----------------+
+| API Express 3000 |----->| /metrics 3000  |
+| health + HTTP    |      +----------------+
++------------------+
+
++------------------+      +----------------+      +----------------+
+| Prometheus 9090  |----->| Grafana 3001   |      | Alertmanager   |
+| scrape metrics   |      | dashboards     |      | 9093           |
++------------------+      +----------------+      +----------------+
 ```
-┌──────────────────────────────────────────────────────────────────────┐
-│                    SLA Guardian System                                │
-├──────────────────────────────────────────────────────────────────────┤
-│                                                                       │
-│  ┌──────────────┐      ┌──────────────┐     ┌─────────────┐         │
-│  │   Express    │◄────►│    Redis     │◄───►│  BullMQ     │         │
-│  │     API      │      │   Message    │     │   Worker    │         │
-│  │              │      │    Broker    │     │             │         │
-│  └──────────────┘      └──────────────┘     └─────────────┘         │
-│       :3000                  :6379          Scheduler/Retry          │
-│       ↓                                                               │
-│  ┌──────────────┐      ┌──────────────┐     ┌─────────────┐         │
-│  │ Prometheus   │      │   Grafana    │     │  Dashboards │         │
-│  │   :9090      │◄─────│   :3001      │◄────│  & Alerts   │         │
-│  │              │      │              │     │             │         │
-│  └──────────────┘      └──────────────┘     └─────────────┘         │
-│  Coleta Métricas       Visualização         Performance Tracking    │
-│                                                                       │
-└──────────────────────────────────────────────────────────────────────┘
-```
 
----
+## Stack utilizada
 
-## 🚀 Tech Stack
+| Camada | Tecnologia | Papel no projeto |
+| --- | --- | --- |
+| Linguagem | TypeScript | Código tipado na API e no worker |
+| API | Express | Endpoints HTTP e métricas internas |
+| Worker | BullMQ | Processamento assíncrono das checagens |
+| Fila | Redis | Backend da fila de jobs |
+| Scheduler | node-cron | Execução periódica das verificações |
+| HTTP Client | Axios | Requisições para a URL monitorada |
+| Métricas | prom-client | Exportação de métricas Prometheus |
+| Observabilidade | Prometheus | Coleta e consulta de métricas |
+| Dashboard | Grafana | Visualização das métricas |
+| Alertas | Alertmanager | Roteamento de notificações |
+| Infra | Docker Compose | Orquestração local dos serviços |
 
-| Camada           | Tecnologia     | Propósito                  |
-| ---------------- | -------------- | -------------------------- |
-| **Runtime**      | Node.js 20     | Ambiente JavaScript        |
-| **Linguagem**    | TypeScript     | Type-safety e melhor DX    |
-| **API**          | Express.js     | Servidor HTTP              |
-| **Queue**        | BullMQ         | Processamento distribuído  |
-| **Cache/PubSub** | Redis          | Fila, cache e broadcast    |
-| **Scheduler**    | node-cron      | Execução agendada          |
-| **HTTP Client**  | axios          | Requisições HTTP           |
-| **Metrics**      | prom-client    | Exportação Prometheus      |
-| **Monitoring**   | Prometheus     | Coleta e armazenagem       |
-| **Dashboard**    | Grafana        | Visualização em tempo real |
-| **Logging**      | Pino           | Logs estruturados          |
-| **Container**    | Docker Compose | Orquestração               |
+## Como executar
 
----
+Pré-requisitos:
 
-## 🚀 Quick Start
+- Docker
+- Docker Compose
 
-### Pré-requisitos
-
-- Docker & Docker Compose
-- Node.js 20+
-- npm 10+
-
-### Instalação (1 minuto)
+Suba todos os serviços:
 
 ```bash
-# Clonar repositório
-git clone https://github.com/seu-usuario/sla-guardian.git
-cd sla-guardian
-
-# Instalar dependências
-npm install
-cd api && npm install && cd ..
-cd worker && npm install && cd ..
+docker compose up --build
 ```
 
-### Executar com Docker Compose
+Após a inicialização, os containers da API, worker, Redis, Prometheus, Grafana e Alertmanager estarão disponíveis localmente.
+
+## Serviços disponíveis
+
+| Serviço | URL | Descrição |
+| --- | --- | --- |
+| API | http://localhost:3000 | API interna do SLA Guardian |
+| Health check | http://localhost:3000/health | Verifica se a API está ativa |
+| Métricas da API | http://localhost:3000/metrics | Métricas HTTP e Node.js da API |
+| Métricas do worker | http://localhost:3002/metrics | Métricas da URL monitorada |
+| Prometheus | http://localhost:9090 | Consulta e coleta de métricas |
+| Grafana | http://localhost:3001 | Dashboard de observabilidade |
+| Alertmanager | http://localhost:9093 | Gerenciamento de alertas |
+| Redis | localhost:6379 | Fila de jobs |
+
+Credenciais padrão do Grafana:
+
+```txt
+Usuário: admin
+Senha: admin
+```
+
+## Configurando a URL monitorada
+
+O worker monitora a URL definida em `TARGET_URL`. Se nenhuma URL for configurada, o valor padrão é:
+
+```txt
+https://google.com
+```
+
+Para alterar no Docker Compose, adicione a variável ao serviço `worker`:
+
+```yaml
+worker:
+  environment:
+    - REDIS_HOST=redis
+    - REDIS_PORT=6379
+    - WORKER_METRICS_PORT=3002
+    - TARGET_URL=https://seu-servico.com/health
+```
+
+Depois, reinicie os containers:
 
 ```bash
-docker-compose up --build
+docker compose up --build
 ```
 
-Serviços iniciados:
+## Métricas principais
 
-- 🔵 **API**: http://localhost:3000
-- 📊 **Métricas Prometheus**: http://localhost:3000/metrics
-- 📈 **Prometheus**: http://localhost:9090
-- 📊 **Grafana Dashboard**: http://localhost:3001 (admin/admin)
-- 📮 **Redis**: localhost:6379
+### API interna
 
-### Testar a API
+A API Express expõe métricas sobre o próprio SLA Guardian:
 
-```bash
-# Health check
-curl http://localhost:3000/health
-# {"status":"ok"}
+| Métrica | Descrição |
+| --- | --- |
+| `http_requests_total` | Total de requisições por método, rota e status |
+| `http_request_duration_seconds` | Duração das requisições HTTP |
+| Métricas padrão Node.js | CPU, memória, event loop, garbage collection e processo |
 
-# Endpoint raiz
-curl http://localhost:3000/
-# {"message":"SLA Guardian API running 🚀"}
+Essas métricas ajudam a responder se o próprio sistema de monitoramento está saudável.
 
-# Métricas Prometheus
-curl http://localhost:3000/metrics
-# # HELP process_cpu_user_seconds_total Total user CPU time spent...
-```
+### URL monitorada
 
-### Acessar Grafana Dashboard
+O worker expõe métricas específicas sobre o alvo configurado em `TARGET_URL`:
 
-1. Abra http://localhost:3001
-2. Login: **admin** / **admin**
-3. Navegue para **Dashboards → SLA Guardian - Performance Dashboard**
-4. Visualize métricas em tempo real de CPU, memória, requisições e status da API
+| Métrica | Descrição |
+| --- | --- |
+| `target_up` | `1` se a URL respondeu, `0` se falhou |
+| `target_response_time_ms` | Tempo da última resposta em milissegundos |
+| `target_status_code` | Último status HTTP recebido |
+| `target_checks_total` | Total de checagens por resultado |
+| `target_failures_total` | Total de falhas registradas |
+| `target_check_duration_seconds` | Histograma de duração das checagens |
+| `target_last_check_timestamp_seconds` | Timestamp da última verificação |
 
----
-
-## Endpoints da API
-
-| Método | Endpoint   | Descrição                      | Status | Acesso                        |
-| ------ | ---------- | ------------------------------ | ------ | ----------------------------- |
-| GET    | `/health`  | Verificar saúde da API         | ✅ 200 | http://localhost:3000/health  |
-| GET    | `/`        | Informação geral da API        | ✅ 200 | http://localhost:3000/        |
-| GET    | `/metrics` | Métricas em formato Prometheus | ✅ 200 | http://localhost:3000/metrics |
-
-### Exemplo de Resposta
-
-```json
-// GET /health
-{
-  "status": "ok"
-}
-
-// GET /
-{
-  "message": "SLA Guardian API running 🚀"
-}
-
-// GET /metrics (Prometheus format)
-# HELP process_cpu_user_seconds_total Total user CPU time spent...
-# TYPE process_cpu_user_seconds_total counter
-```
-
----
+Essas métricas são coletadas pelo Prometheus e exibidas no Grafana.
 
 ## Dashboard Grafana
 
-O SLA Guardian inclui um **dashboard pré-configurado** com visualização de métricas em tempo real.
+O projeto inclui um dashboard provisionado automaticamente com painéis para:
 
-### Painéis Disponíveis
+- Status da API.
+- Uso de CPU e memória.
+- Taxa de requisições.
+- Latência da API.
+- Taxa de sucesso e erro.
+- Status da URL monitorada.
+- Tempo de resposta da URL monitorada.
+- Status HTTP retornado pelo alvo.
+- Percentis de duração das checagens.
 
-| Painel            | Descrição                       | Métrica                                     |
-| ----------------- | ------------------------------- | ------------------------------------------- |
-| **CPU Usage**     | Uso de CPU em percentual        | `rate(process_cpu_seconds_total[5m]) * 100` |
-| **Memory Usage**  | Memória residente do processo   | `process_resident_memory_bytes`             |
-| **Request Rate**  | Taxa de requisições por segundo | `rate(http_requests_total[1m])`             |
-| **API Status**    | Indicador de saúde (UP/DOWN)    | `up{job="sla-guardian-api"}`                |
-| **Response Time** | Latência p95 e p99              | `histogram_quantile(0.95/0.99, ...)`        |
-| **Success Rate**  | Taxa de sucesso vs erros        | `http_requests_total{status=~"..."}`        |
+Também há imagens de exemplo do dashboard em:
 
-### Acesso ao Dashboard
-
-```
-URL: http://localhost:3001
-Usuário: admin
-Senha: admin
-Dashboard: SLA Guardian - Performance Dashboard
+```txt
+img/cpu.PNG
+img/memory.PNG
 ```
 
-### Visualização do Dashboard
+## Alertas
 
-<div align="center">
-  <table>
-    <tr>
-      <td align="center">
-        <img src="img/cpu.PNG" width="100%" alt="CPU Usage Dashboard">
-      </td>
-      <td align="center">
-        <img src="img/memory.PNG" width="100%" alt="Memory Usage Dashboard">
-      </td>
-    </tr>
-  </table>
-</div>
+O projeto inclui regras de alerta em `prometheus-rules.yml` e configuração de roteamento no Alertmanager.
 
----
+Exemplos de condições monitoradas:
 
-## 🤖 Pipeline MLOps - Ciclo Contínuo de Inteligência
+- API indisponível.
+- Alta taxa de erro.
+- Latência elevada.
+- Alto uso de CPU.
+- Alto uso de memória.
+- Tráfego anormal.
+- Múltiplos serviços offline.
 
-No SLA Guardian, apliquei **práticas de MLOps** ao transformar métricas de monitoramento em dados para treinamento de modelos. O sistema implementa:
+O worker também possui um sistema próprio de alertas para falhas da URL alvo:
 
-### 📊 Arquitetura MLOps
+- Alerta após 3 falhas.
+- Cooldown de 5 minutos para evitar spam.
+- Notificação de recuperação quando o serviço volta a responder.
+- Canais disponíveis: console, webhook e Slack.
 
-```
-Métricas (Prometheus)
-    ↓
-Coleta de Dados (Feature Store)
-    ↓
-Preparação & Transformação
-    ↓
-Treinamento de Modelos (MLflow)
-    ↓
-Versionamento & Registry
-    ↓
-Deploy em Containers
-    ↓
-Monitoramento (Prometheus/Grafana)
-    ↓
-Retroalimentação → Retrainamento
-```
-
-### 🔄 Ciclo Contínuo de Melhoria
-
-1. **Coleta de Dados**: Métricas em tempo real são persistidas como features
-   - CPU usage, memory, latency, error rates
-   - Response times, throughput, uptime
-
-2. **Treinamento de Modelos**: MLflow controla versionamento de modelos
-   - Experimentos rastreados com parâmetros e métricas
-   - Modelos persistidos com histórico completo
-   - Comparação automática de performance
-
-3. **Validação**: Modelos são testados antes do deploy
-   - Métricas de acurácia, precisão, recall
-   - Cross-validation com dados reais
-
-4. **Deploy**: Modelos são containerizados com a API
-   - Versionamento semântico
-   - Rollback automático se performance cai
-
-5. **Monitoramento**: Performance do modelo é rastreada
-   - Drift detection em produção
-   - Alertas se acurácia cai abaixo de threshold
-
-6. **Retroalimentação**: Dados novos alimentam próximo treinamento
-   - Ciclo contínuo de melhoria baseado em dados reais
-
-### 📋 Recursos MLOps
-
-| Recurso                 | Descrição                                        |
-| ----------------------- | ------------------------------------------------ |
-| **MLflow Tracking**     | Experimentos, parâmetros, métricas versionados   |
-| **Model Registry**      | Histórico completo de modelos com estágios       |
-| **Feature Engineering** | Transformação automática de métricas em features |
-| **Data Versioning**     | Rastreamento de datasets usados no treinamento   |
-| **Model Evaluation**    | Validação cross-dataset e drift detection        |
-| **CI/CD ML**            | Pipeline automatizado de treinamento e deploy    |
-| **Container Registry**  | Versionamento de imagens Docker com modelos      |
-| **Prometheus Metrics**  | Observabilidade do modelo em produção            |
-
-### 🔗 Integração com Stack Existente
-
-- **Prometheus**: Fornece fonte de dados para ML
-- **Grafana**: Visualiza métricas do modelo e performance
-- **Docker**: Empacota modelos com a aplicação
-- **Redis**: Cache de features para low-latency inference
-- **BullMQ**: Queue para jobs de retrainamento
-
-### 💾 Exemplo: Predição de Falhas com Base em Padrões
-
-```python
-# Dados coletados pelo SLA Guardian
-features = {
-    "cpu_usage_mean_5m": 45.2,
-    "memory_usage_trend": 0.8,
-    "request_rate": 1250,
-    "error_rate_5m": 0.02,
-    "latency_p95": 250,
-    "uptime_pct": 99.8
-}
-
-# Modelo MLflow prediz probabilidade de falha
-predictions = model.predict(features)
-# output: {"failure_probability": 0.12, "confidence": 0.94}
-
-# Se probabilidade > 0.3, dispara alerta preventivo
-```
-
----
-
-## ⚙️ Configuração
-
-Crie ou edite `.env` nos diretórios:
-
-### `api/.env`
+Variáveis úteis:
 
 ```env
-PORT=3000
-REDIS_HOST=redis
-REDIS_PORT=6379
-```
-
-### `worker/.env`
-
-```env
-REDIS_HOST=redis
-REDIS_PORT=6379
-TARGET_URL=https://google.com
-SECONDARY_URL=https://example.com
-```
-
----
-
-## Sistema de Alertas Inteligente
-
-O SLA Guardian possui um sistema robusto de notificações multi-canal que permite enviar alertas através de diferentes plataformas.
-
-### Canais Disponíveis
-
-#### Console (Padrão)
-
-Exibe alertas no terminal do worker. Perfeito para desenvolvimento.
-
-```bash
-┌─────────────────────────────────────────────────────────┐
-│ ❌ ALERTA DE MONITORAMENTO
-├─────────────────────────────────────────────────────────┤
-│ Serviço:     https://google.com
-│ Status:      FAILURE
-│ Mensagem:    Falha ao verificar serviço
-│ Tempo:       29/04/2026 14:30:45
-│ Erro:        getaddrinfo ENOTFOUND
-│ Tentativas:  3/5
-│ Duração:     0ms
-└─────────────────────────────────────────────────────────┘
-```
-
-#### Webhook Genérico
-
-Envie alertas para qualquer URL que aceite POST HTTP.
-
-```env
-WEBHOOK_URL=https://seu-servidor.com/alerts
-```
-
-Payload enviado:
-
-```json
-{
-  "alert": {
-    "service": "https://google.com",
-    "status": "failure",
-    "message": "Falha ao verificar serviço",
-    "error": "Timeout exceeded",
-    "duration": 5000,
-    "timestamp": "2026-04-29T14:30:45.000Z"
-  },
-  "metadata": {
-    "project": "SLA Guardian",
-    "environment": "production",
-    "version": "1.0.0"
-  }
-}
-```
-
-#### Slack
-
-Integração nativa com Slack para notificações em tempo real.
-
-```env
-SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/WEBHOOK/URL
-```
-
-**Como obter Webhook URL do Slack:**
-
-1. Acesse https://api.slack.com/apps
-2. Crie uma nova app ou selecione existente
-3. Vá em "Incoming Webhooks"
-4. Ative e clique em "Add New Webhook to Workspace"
-5. Selecione o canal desejado
-6. Copie o URL gerado
-
-#### Email
-
-Notificações por email via SMTP.
-
-```env
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_SECURE=false
-SMTP_USER=seu-email@gmail.com
-SMTP_PASS=sua-senha-ou-app-password
-SMTP_FROM=sla-guardian@example.com
-ALERT_EMAIL=admin@example.com
-```
-
-**Configuração Gmail:**
-
-1. Ative "Menos segurança" ou use "Senha de Aplicativo"
-2. Para 2FA, gere uma app-specific password
-3. Use a app-specific password no `SMTP_PASS`
-
-### Configuração de Alertas
-
-```env
-# Console (sempre ativo)
-
-# Webhook customizado
 WEBHOOK_URL=https://seu-webhook.com/alerts
-
-# Slack
 SLACK_WEBHOOK_URL=https://hooks.slack.com/services/...
-
-# Email
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=seu-email@gmail.com
-SMTP_PASS=app-password
-ALERT_EMAIL=admin@example.com
 ```
 
-### Lógica de Alertas
+## Estrutura do projeto
 
-- **Threshold**: Dispara alerta apenas após 3 falhas consecutivas
-- **Cooldown**: Evita spam com intervalo de 5 minutos entre alertas do mesmo serviço
-- **Recuperação**: Notifica automaticamente quando o serviço volta a funcionar
-- **Context**: Inclui número de tentativas, duração e erro específico
-
----
-
-## 📁 Estrutura do Projeto
-
-```
+```txt
 sla-guardian/
-├── api/
-│   ├── src/
-│   │   └── index.ts          # Express server + Prometheus
-│   ├── Dockerfile
-│   ├── package.json
-│   ├── tsconfig.json
-│   └── .env
-│
-├── worker/
-│   ├── src/
-│   │   ├── index.ts          # Entry point
-│   │   ├── monitor.ts        # BullMQ + Worker logic
-│   │   ├── scheduler.ts      # Health check scheduling
-│   │   ├── alert.ts          # 🔔 Alert manager
-│   │   ├── notifications.ts  # 📮 Canais de notificação
-│   │   ├── retry.ts          # Retry logic
-│   │   └── types.ts          # TypeScript definitions
-│   ├── Dockerfile
-│   ├── package.json
-│   ├── tsconfig.json
-│   └── .env
-│
-├── grafana-provisioning/
-│   ├── datasources/
-│   │   └── prometheus.yml    # Data source Prometheus
-│   └── dashboards/
-│       ├── dashboards.yml
-│       └── sla-guardian-dashboard.json  # 📊 Dashboard pré-configurado
-│
-├── prometheus.yml            # Config scraping
-├── docker-compose.yml        # Orquestração com Prometheus + Grafana
-├── .env.example
-├── .gitignore
-└── README.md
+|-- api/
+|   `-- src/
+|       `-- index.ts              # API Express e métricas Prometheus
+|-- worker/
+|   `-- src/
+|       |-- index.ts              # Entrada do worker
+|       |-- monitor.ts            # Scheduler, fila e checagem da URL alvo
+|       |-- metrics.ts            # Métricas Prometheus do alvo monitorado
+|       |-- alert.ts              # Controle de thresholds e cooldown
+|       `-- notifications.ts      # Canais de notificação
+|-- grafana-provisioning/
+|   |-- datasources/              # Datasource Prometheus
+|   |-- dashboards/               # Dashboard Grafana
+|   `-- alertmanagers/            # Integração Grafana/Alertmanager
+|-- alertmanager/
+|   |-- config.yml                # Rotas de alerta
+|   `-- templates.tmpl            # Template das notificações
+|-- prometheus.yml                # Scrape da API e do worker
+|-- prometheus-rules.yml          # Regras de alerta
+`-- docker-compose.yml            # Stack completa local
 ```
 
----
+## Por que este projeto é relevante
 
-## 📈 Prometheus & Observabilidade
+Este projeto demonstra habilidades práticas em áreas muito usadas em times de backend, plataforma e DevOps:
 
-O SLA Guardian exporta métricas em formato Prometheus padrão, permitindo integração com qualquer sistema de monitoramento.
+- Construção de serviços Node.js com TypeScript.
+- Exposição de métricas no padrão Prometheus.
+- Processamento assíncrono com filas.
+- Retry e tolerância a falhas.
+- Observabilidade com Prometheus e Grafana.
+- Alertas com Prometheus e Alertmanager.
+- Provisionamento de dashboard como código.
+- Orquestração local com Docker Compose.
 
-### Scraping Automático
+É um projeto pequeno o suficiente para ser entendido rapidamente, mas completo o bastante para mostrar domínio de conceitos importantes de sistemas em produção.
 
-Prometheus está configurado para scrappear métricas a cada **15 segundos** da API:
+## Desenvolvimento local sem Docker Compose
 
-```yaml
-# prometheus.yml
-scrape_configs:
-  - job_name: "sla-guardian-api"
-    static_configs:
-      - targets: ["api:3000"]
-    metrics_path: "/metrics"
-    scrape_interval: 15s
-```
-
-### Métricas Coletadas
-
-- **Node.js Runtime**: CPU, memória, garbage collection, event loop
-- **HTTP**: Requisições, latência, status codes
-- **Custom**: (Pronto para expandir com métricas de negócio)
-
-### Acesso ao Prometheus
-
-```
-URL: http://localhost:9090
-Query: Explore métricas em tempo real
-Alertas: Configure alertas baseados em thresholds
-```
-
----
-
-## 🔔 Alertas Inteligentes no Grafana
-
-O SLA Guardian agora inclui um sistema completo de alertas integrado com Prometheus e Alertmanager, permitindo notificações em múltiplos canais.
-
-### Arquitetura de Alertas
-
-```
-Prometheus (regras)
-    ↓
-Alertmanager (roteamento)
-    ↓
-Slack | Email | Webhook | Grafana
-```
-
-### Alertas Pré-configurados
-
-| Alerta                    | Condição                      | Severidade | Ação          |
-| ------------------------- | ----------------------------- | ---------- | ------------- |
-| 🔴 API Unresponsive       | API offline > 2 min           | Crítico    | Slack + Email |
-| 🟠 High Error Rate        | Taxa de erro > 5% por 5 min   | Aviso      | Slack         |
-| 🟠 High Latency           | P95 latência > 1s por 5 min   | Aviso      | Slack         |
-| 🔴 Critical Latency       | P99 latência > 5s por 2 min   | Crítico    | Slack + Email |
-| 🟠 High Memory Usage      | Memória > 85% por 10 min      | Aviso      | Slack         |
-| 🟠 High CPU Usage         | CPU > 80% por 10 min          | Aviso      | Slack         |
-| ℹ️ Unusual Traffic        | Requisições > 100/s por 5 min | Info       | Slack         |
-| 🔴 Multiple Services Down | 2+ serviços offline por 1 min | Crítico    | Escalação     |
-
-### Configurar Notificações por Slack
-
-1. **Criar Webhook do Slack**:
-   - Acesse: https://api.slack.com/apps
-   - Crie uma app: "SLA Guardian Alerts"
-   - Vá para: **Incoming Webhooks** → **Add New Webhook**
-   - Selecione canal: #alerts
-   - Copie a URL
-
-2. **Configurar no Alertmanager**:
-   - Edite `.env` ou `.env.alerts.example`:
-     ```bash
-     SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/WEBHOOK/URL
-     ```
-
-3. **Reiniciar Alertmanager**:
-   ```bash
-   docker-compose restart alertmanager
-   ```
-
-### Configurar Notificações por Email
-
-1. **Gmail com App Password**:
-   - Ative 2-Step Verification em: https://myaccount.google.com/security
-   - Vá para: https://myaccount.google.com/apppasswords
-   - Gere app password para Mail
-   - Copie a senha
-
-2. **Configurar no `.env`**:
-   ```bash
-   SMTP_PASSWORD=xxxx xxxx xxxx xxxx
-   SMTP_USER=seu-email@gmail.com
-   ALERT_EMAIL=admin@example.com
-   ```
-
-### Webhook Customizado
-
-Configure um endpoint próprio para receber alertas:
-
-```bash
-WEBHOOK_URL=https://seu-servidor.com/webhooks/alerts
-```
-
-Payload recebido:
-
-```json
-{
-  "status": "firing",
-  "alerts": [
-    {
-      "status": "firing",
-      "labels": {
-        "alertname": "APIUnresponsive",
-        "severity": "critical"
-      },
-      "annotations": {
-        "summary": "API não está respondendo",
-        "description": "API em api:3000 offline > 2 min"
-      }
-    }
-  ]
-}
-```
-
-### Interfaces de Alerta
-
-| Serviço      | URL                          | Descrição                          |
-| ------------ | ---------------------------- | ---------------------------------- |
-| Prometheus   | http://localhost:9090/alerts | Ver alertas disparados             |
-| Alertmanager | http://localhost:9093        | Gerenciar alertas e silenciamentos |
-| Grafana      | http://localhost:3001        | Dashboard + histórico de alertas   |
-
-### Testar Alertas
-
-```bash
-# Ver script de teste
-bash guides/test-alerts-grafana.sh
-
-# Simular falha da API (vai disparar alerta)
-docker-compose stop api
-# Esperar 2+ minutos...
-docker-compose start api
-```
-
-### Documentação Completa
-
-Veja [Guia de Alertas no Grafana](./guides/ALERTS_GRAFANA.md) para:
-
-- ✅ Configuração passo-a-passo
-- ✅ Integrações com Discord, Teams, PagerDuty
-- ✅ Templates de mensagens customizadas
-- ✅ Silenciamento de alertas
-- ✅ Regras de inibição (evitar duplicatas)
-- ✅ Troubleshooting
-
----
-
-## 🧪 Desenvolvimento Local (sem Docker)
-
-### Terminal 1 - Redis
+Caso queira executar os serviços manualmente:
 
 ```bash
 docker run -p 6379:6379 redis:7-alpine
 ```
 
-### Terminal 2 - API
+Em outro terminal, execute a API:
 
 ```bash
-cd api && npm run dev
+cd api
+npm install
+npm run dev
 ```
 
-### Terminal 3 - Worker
+Em outro terminal, execute o worker:
 
 ```bash
-cd worker && npm run dev
+cd worker
+npm install
+npm run dev
 ```
 
-### Terminal 4 - Logs
+Endpoints úteis:
 
 ```bash
-# Testar endpoints
 curl http://localhost:3000/health
+curl http://localhost:3000/metrics
+curl http://localhost:3002/metrics
 ```
 
----
+## Próximos passos possíveis
 
-## 🔄 Fluxo de Monitoramento
+Algumas melhorias naturais para evoluir o projeto:
 
-```
-1. Scheduler (a cada 30s)
-   ↓
-2. Cria job na fila Redis
-   ↓
-3. Worker processa job
-   ↓
-4. Tenta acessar URL com timeout 5s
-   ↓
-5. Sucesso?
-   ├─ Sim → Log + Métrica ✅
-   └─ Não → Retry com backoff exponencial
-   ↓
-6. Max retries?
-   ├─ Sim → Falha registrada 🔥
-   └─ Não → Tenta novamente
-```
-
----
-
-## 📊 Exemplo de Saída
-
-```bash
-$ docker-compose up
-
-sla-guardian-redis    | Ready to accept connections
-sla-guardian-api     | 🔧 Iniciando SLA Guardian API...
-sla-guardian-api     | API rodando na porta 3000
-sla-guardian-worker  | 🔧 Iniciando SLA Guardian Worker...
-sla-guardian-worker  | ✅ Worker rodando e pronto para monitorar serviços
-sla-guardian-worker  | 🚀 Scheduler de health check iniciado
-
-// Após 30 segundos:
-sla-guardian-worker  | ⏱️ Enviando job de monitoramento...
-sla-guardian-worker  | 🔎 Verificando: https://google.com
-sla-guardian-worker  | ✅ https://google.com OK - Status: 200 - 145ms
-sla-guardian-worker  | 🎉 Job 1 concluído
-```
-
----
-
-## 🎓 Aprendizados & Conceitos Demonstrados
-
-### 🏗️ Arquitetura Distribuída
-
-- Padrão Message Queue (BullMQ)
-- Desacoplamento de serviços
-- Event-driven architecture
-- Task scheduling com cron
-
-### 🛡️ Resiliência & Confiabilidade
-
-- Retry automático com backoff exponencial
-- Tratamento de falhas transitórias
-- Graceful shutdown e sinais do sistema
-- Validação e error handling robusto
-
-### 📈 Observabilidade & Monitoramento
-
-- Prometheus metrics para análise
-- Health checks estruturados
-- Logs estruturados (Pino)
-- Rastreamento de performance
-
-### 🤖 MLOps & Data Science
-
-- **Transformação de Métricas em Dados**: Coleta contínua de métricas de monitoramento convertidas em features para ML
-- **Versionamento de Modelos**: Implementação com MLflow para rastreamento de experimentos e versões
-- **Pipeline de Treinamento**: Automação de coleta de dados → preparação → treinamento → validação
-- **Monitoramento de Performance**: Prometheus e Grafana rastreiam métricas do modelo em produção
-- **Ciclo Contínuo de Melhoria**: Retroalimentação baseada em dados reais para retrainamento automático
-- **Model Registry**: Versionamento e gerenciamento de modelos com rastreabilidade completa
-
-### 💻 Stack Técnico
-
-- **TypeScript** - Type-safe em 100% do código
-- **Express.js** - API REST escalável e segura
-- **BullMQ** - Processamento distribuído de jobs
-- **Redis** - Fila resiliente e broker de mensagens
-- **Prometheus** - Coleta e análise de métricas
-- **Grafana** - Visualização em dashboard
-- **Docker** - Containerização e orquestração
-- **MLflow** - Versionamento e tracking de modelos ML
-- **Python** - Pipelines de ML e data science
-
-### 🚀 DevOps & Infrastructure as Code
-
-- Docker & Docker Compose para multi-container
-- Prometheus para scraping automático de métricas
-- Grafana com dashboard pré-configurado
-- Environment management (.env)
-- CI/CD ready com suporte a modelos ML
-- Configuration as Code
-- Provisioning automático de data sources e dashboards
-- MLOps pipeline integrado ao monitoramento
-
----
+- Monitorar múltiplas URLs configuráveis.
+- Criar endpoint para cadastrar alvos dinamicamente.
+- Persistir histórico de incidentes em banco de dados.
+- Adicionar autenticação na API.
+- Criar testes automatizados para API, worker e alertas.
+- Separar ambientes de desenvolvimento e produção.
+- Adicionar CI para build e validação dos serviços.
