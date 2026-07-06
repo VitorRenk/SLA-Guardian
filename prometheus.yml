@@ -22,3 +22,9 @@ scrape_configs:
       - targets: ["api:3000"]
     metrics_path: "/metrics"
     scrape_interval: 15s
+
+  - job_name: "sla-guardian-worker"
+    static_configs:
+      - targets: ["worker:3002"]
+    metrics_path: "/metrics"
+    scrape_interval: 15s

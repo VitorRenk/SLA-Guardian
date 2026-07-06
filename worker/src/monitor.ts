@@ -5,8 +5,12 @@ import cron from "node-cron";
 import dotenv from "dotenv";
 import { alertManager } from "./alert";
 import { ConsoleChannel, WebhookChannel, SlackChannel } from "./notifications";
+import { recordTargetCheck, startMetricsServer } from "./metrics";
 
 dotenv.config();
+
+const METRICS_PORT = Number(process.env.WORKER_METRICS_PORT) || 3002;
+startMetricsServer(METRICS_PORT);
 
 // 🔌 Conexão Redis (IMPORTANTE)
 const connection = new IORedis({
@@ -43,16 +47,32 @@ const TARGET_URL = process.env.TARGET_URL || "https://google.com";
 
 // 🔍 Função para verificar serviço
 export async function checkService(url: string) {
+  const start = Date.now();
+
   try {
-    const start = Date.now();
     const response = await axios.get(url, { timeout: 5000 });
     const duration = Date.now() - start;
 
     console.log(`✅ ${url} OK - Status: ${response.status} - ${duration}ms`);
+    recordTargetCheck({
+      url,
+      success: true,
+      durationMs: duration,
+      statusCode: response.status,
+    });
+
     return { success: true, status: response.status, duration };
   } catch (error: any) {
+    const duration = Date.now() - start;
+
+    recordTargetCheck({
+      url,
+      success: false,
+      durationMs: duration,
+    });
+
     console.error(`❌ Falha em ${url}:`, error.message);
-    return { success: false, error: error.message };
+    return { success: false, error: error.message, duration };
   }
 }
 
@@ -78,7 +98,7 @@ const worker = new Worker(
         status: "failure",
         message: `Falha ao verificar serviço: ${url}`,
         error: result.error,
-        duration: 0,
+        duration: result.duration,
         retryCount: job.attemptsMade,
         maxRetries: job.opts.attempts,
         timestamp: new Date(),

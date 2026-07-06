@@ -22,9 +22,12 @@ services:
   worker:
     build: ./worker
     container_name: sla-guardian-worker
+    ports:
+      - "3002:3002"
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - WORKER_METRICS_PORT=3002
     depends_on:
       - redis
     restart: always
@@ -44,6 +47,7 @@ services:
       - "--storage.tsdb.path=/prometheus"
     depends_on:
       - api
+      - worker
     restart: always
 
   # GRAFANA - Dashboard
