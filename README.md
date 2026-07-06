@@ -56,19 +56,19 @@ URL monitorada
 
 ## Stack utilizada
 
-| Camada | Tecnologia | Papel no projeto |
-| --- | --- | --- |
-| Linguagem | TypeScript | Código tipado na API e no worker |
-| API | Express | Endpoints HTTP e métricas internas |
-| Worker | BullMQ | Processamento assíncrono das checagens |
-| Fila | Redis | Backend da fila de jobs |
-| Scheduler | node-cron | Execução periódica das verificações |
-| HTTP Client | Axios | Requisições para a URL monitorada |
-| Métricas | prom-client | Exportação de métricas Prometheus |
-| Observabilidade | Prometheus | Coleta e consulta de métricas |
-| Dashboard | Grafana | Visualização das métricas |
-| Alertas | Alertmanager | Roteamento de notificações |
-| Infra | Docker Compose | Orquestração local dos serviços |
+| Camada          | Tecnologia     | Papel no projeto                       |
+| --------------- | -------------- | -------------------------------------- |
+| Linguagem       | TypeScript     | Código tipado na API e no worker       |
+| API             | Express        | Endpoints HTTP e métricas internas     |
+| Worker          | BullMQ         | Processamento assíncrono das checagens |
+| Fila            | Redis          | Backend da fila de jobs                |
+| Scheduler       | node-cron      | Execução periódica das verificações    |
+| HTTP Client     | Axios          | Requisições para a URL monitorada      |
+| Métricas        | prom-client    | Exportação de métricas Prometheus      |
+| Observabilidade | Prometheus     | Coleta e consulta de métricas          |
+| Dashboard       | Grafana        | Visualização das métricas              |
+| Alertas         | Alertmanager   | Roteamento de notificações             |
+| Infra           | Docker Compose | Orquestração local dos serviços        |
 
 ## Como executar
 
@@ -87,16 +87,16 @@ Após a inicialização, os containers da API, worker, Redis, Prometheus, Grafan
 
 ## Serviços disponíveis
 
-| Serviço | URL | Descrição |
-| --- | --- | --- |
-| API | http://localhost:3000 | API interna do SLA Guardian |
-| Health check | http://localhost:3000/health | Verifica se a API está ativa |
-| Métricas da API | http://localhost:3000/metrics | Métricas HTTP e Node.js da API |
-| Métricas do worker | http://localhost:3002/metrics | Métricas da URL monitorada |
-| Prometheus | http://localhost:9090 | Consulta e coleta de métricas |
-| Grafana | http://localhost:3001 | Dashboard de observabilidade |
-| Alertmanager | http://localhost:9093 | Gerenciamento de alertas |
-| Redis | localhost:6379 | Fila de jobs |
+| Serviço            | URL                           | Descrição                      |
+| ------------------ | ----------------------------- | ------------------------------ |
+| API                | http://localhost:3000         | API interna do SLA Guardian    |
+| Health check       | http://localhost:3000/health  | Verifica se a API está ativa   |
+| Métricas da API    | http://localhost:3000/metrics | Métricas HTTP e Node.js da API |
+| Métricas do worker | http://localhost:3002/metrics | Métricas da URL monitorada     |
+| Prometheus         | http://localhost:9090         | Consulta e coleta de métricas  |
+| Grafana            | http://localhost:3001         | Dashboard de observabilidade   |
+| Alertmanager       | http://localhost:9093         | Gerenciamento de alertas       |
+| Redis              | localhost:6379                | Fila de jobs                   |
 
 Credenciais padrão do Grafana:
 
@@ -136,11 +136,11 @@ docker compose up --build
 
 A API Express expõe métricas sobre o próprio SLA Guardian:
 
-| Métrica | Descrição |
-| --- | --- |
-| `http_requests_total` | Total de requisições por método, rota e status |
-| `http_request_duration_seconds` | Duração das requisições HTTP |
-| Métricas padrão Node.js | CPU, memória, event loop, garbage collection e processo |
+| Métrica                         | Descrição                                               |
+| ------------------------------- | ------------------------------------------------------- |
+| `http_requests_total`           | Total de requisições por método, rota e status          |
+| `http_request_duration_seconds` | Duração das requisições HTTP                            |
+| Métricas padrão Node.js         | CPU, memória, event loop, garbage collection e processo |
 
 Essas métricas ajudam a responder se o próprio sistema de monitoramento está saudável.
 
@@ -148,15 +148,15 @@ Essas métricas ajudam a responder se o próprio sistema de monitoramento está 
 
 O worker expõe métricas específicas sobre o alvo configurado em `TARGET_URL`:
 
-| Métrica | Descrição |
-| --- | --- |
-| `target_up` | `1` se a URL respondeu, `0` se falhou |
-| `target_response_time_ms` | Tempo da última resposta em milissegundos |
-| `target_status_code` | Último status HTTP recebido |
-| `target_checks_total` | Total de checagens por resultado |
-| `target_failures_total` | Total de falhas registradas |
-| `target_check_duration_seconds` | Histograma de duração das checagens |
-| `target_last_check_timestamp_seconds` | Timestamp da última verificação |
+| Métrica                               | Descrição                                 |
+| ------------------------------------- | ----------------------------------------- |
+| `target_up`                           | `1` se a URL respondeu, `0` se falhou     |
+| `target_response_time_ms`             | Tempo da última resposta em milissegundos |
+| `target_status_code`                  | Último status HTTP recebido               |
+| `target_checks_total`                 | Total de checagens por resultado          |
+| `target_failures_total`               | Total de falhas registradas               |
+| `target_check_duration_seconds`       | Histograma de duração das checagens       |
+| `target_last_check_timestamp_seconds` | Timestamp da última verificação           |
 
 Essas métricas são coletadas pelo Prometheus e exibidas no Grafana.
 
@@ -281,15 +281,3 @@ curl http://localhost:3000/health
 curl http://localhost:3000/metrics
 curl http://localhost:3002/metrics
 ```
-
-## Próximos passos possíveis
-
-Algumas melhorias naturais para evoluir o projeto:
-
-- Monitorar múltiplas URLs configuráveis.
-- Criar endpoint para cadastrar alvos dinamicamente.
-- Persistir histórico de incidentes em banco de dados.
-- Adicionar autenticação na API.
-- Criar testes automatizados para API, worker e alertas.
-- Separar ambientes de desenvolvimento e produção.
-- Adicionar CI para build e validação dos serviços.
