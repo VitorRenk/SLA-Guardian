@@ -1,6 +1,6 @@
 # SLA Guardian
 
-> Monitoramento de disponibilidade, métricas e alertas para serviços HTTP.
+> Monitoramento de disponibilidade, métricas, incidentes e alertas para serviços HTTP.
 
 [![Node.js](https://img.shields.io/badge/Node.js-20+-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6+-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -11,64 +11,64 @@
 
 ## Sobre o projeto
 
-SLA Guardian é um projeto de observabilidade construído com TypeScript, Docker, Redis, Prometheus e Grafana. Ele monitora uma URL alvo periodicamente, registra métricas reais sobre disponibilidade e tempo de resposta, e oferece uma stack completa para visualização e alertas.
+SLA Guardian é uma stack de observabilidade construída com TypeScript, Docker, Redis, Prometheus e Grafana. O projeto monitora múltiplas URLs, registra métricas reais de disponibilidade e tempo de resposta, abre incidentes quando um serviço falha e marca esses incidentes como resolvidos quando o serviço volta.
 
-O objetivo é demonstrar, de forma prática, conceitos importantes de backend e DevOps: processamento assíncrono, filas, retry com backoff, coleta de métricas, dashboards provisionados e alertas.
+O objetivo é demonstrar conceitos práticos de backend e DevOps: processamento assíncrono, filas, retry com backoff, persistência de incidentes, métricas Prometheus, dashboards provisionados e alertas.
 
 ## O que o projeto faz
 
-- Monitora uma URL configurável por meio da variável `TARGET_URL`.
+- Monitora múltiplas URLs configuradas por `TARGET_URLS`.
 - Executa checagens automáticas a cada 30 segundos.
 - Processa verificações em background com BullMQ e Redis.
 - Aplica retry automático com backoff exponencial em caso de falha.
-- Expõe métricas Prometheus da API interna e do alvo monitorado.
-- Disponibiliza dashboard Grafana já provisionado.
+- Expõe métricas Prometheus da API interna e dos alvos monitorados.
+- Persiste incidentes em SQLite.
+- Disponibiliza endpoints para consultar incidentes.
+- Inclui dashboard Grafana provisionado.
 - Inclui regras de alerta no Prometheus e integração com Alertmanager.
-- Suporta notificações por console, webhook e Slack.
+- Possui testes automatizados com Vitest.
 
 ## Arquitetura
 
 ```txt
-URL monitorada
-      |
-      v
-+------------------+      +----------------+
-| Worker + BullMQ  |----->| /metrics 3002  |
-| checks + retries |      +----------------+
-+--------+---------+
-         |
-         v
-+------------------+
-| Redis 6379       |
-| fila de jobs     |
-+------------------+
-
-+------------------+      +----------------+
-| API Express 3000 |----->| /metrics 3000  |
-| health + HTTP    |      +----------------+
-+------------------+
-
+TARGET_URLS
+    |
+    v
 +------------------+      +----------------+      +----------------+
-| Prometheus 9090  |----->| Grafana 3001   |      | Alertmanager   |
-| scrape metrics   |      | dashboards     |      | 9093           |
+| Worker + BullMQ  |----->| /metrics 3002  |----->| Prometheus     |
+| checks + retries |      | target_*       |      | 9090           |
++--------+---------+      +----------------+      +-------+--------+
+         |                                               |
+         v                                               v
 +------------------+      +----------------+      +----------------+
+| Redis 6379       |      | SQLite /data   |      | Grafana 3001   |
+| fila de jobs     |      | incidentes     |      | dashboards     |
++------------------+      +--------+-------+      +----------------+
+                                   ^
+                                   |
++------------------+      +--------+-------+
+| API Express 3000 |----->| /incidents     |
+| health + metrics |      | /metrics 3000  |
++------------------+      +----------------+
 ```
 
 ## Stack utilizada
 
-| Camada          | Tecnologia     | Papel no projeto                       |
-| --------------- | -------------- | -------------------------------------- |
-| Linguagem       | TypeScript     | Código tipado na API e no worker       |
-| API             | Express        | Endpoints HTTP e métricas internas     |
-| Worker          | BullMQ         | Processamento assíncrono das checagens |
-| Fila            | Redis          | Backend da fila de jobs                |
-| Scheduler       | node-cron      | Execução periódica das verificações    |
-| HTTP Client     | Axios          | Requisições para a URL monitorada      |
-| Métricas        | prom-client    | Exportação de métricas Prometheus      |
-| Observabilidade | Prometheus     | Coleta e consulta de métricas          |
-| Dashboard       | Grafana        | Visualização das métricas              |
-| Alertas         | Alertmanager   | Roteamento de notificações             |
-| Infra           | Docker Compose | Orquestração local dos serviços        |
+| Camada | Tecnologia | Papel no projeto |
+| --- | --- | --- |
+| Linguagem | TypeScript | Código tipado na API e no worker |
+| API | Express | Health check, métricas e consulta de incidentes |
+| Worker | BullMQ | Processamento assíncrono das checagens |
+| Fila | Redis | Backend da fila de jobs |
+| Scheduler | node-cron | Execução periódica das verificações |
+| HTTP Client | Axios | Requisições para as URLs monitoradas |
+| Persistência | SQLite via sql.js | Histórico de incidentes |
+| Métricas | prom-client | Exportação de métricas Prometheus |
+| Observabilidade | Prometheus | Coleta e consulta de métricas |
+| Dashboard | Grafana | Visualização das métricas |
+| Alertas | Alertmanager | Roteamento de notificações |
+| Testes | Vitest | Testes automatizados |
+| Infra | Docker Compose | Orquestração local dos serviços |
 
 ## Como executar
 
@@ -83,20 +83,22 @@ Suba todos os serviços:
 docker compose up --build
 ```
 
-Após a inicialização, os containers da API, worker, Redis, Prometheus, Grafana e Alertmanager estarão disponíveis localmente.
+Após a inicialização, a API, worker, Redis, Prometheus, Grafana e Alertmanager estarão disponíveis localmente.
 
 ## Serviços disponíveis
 
-| Serviço            | URL                           | Descrição                      |
-| ------------------ | ----------------------------- | ------------------------------ |
-| API                | http://localhost:3000         | API interna do SLA Guardian    |
-| Health check       | http://localhost:3000/health  | Verifica se a API está ativa   |
-| Métricas da API    | http://localhost:3000/metrics | Métricas HTTP e Node.js da API |
-| Métricas do worker | http://localhost:3002/metrics | Métricas da URL monitorada     |
-| Prometheus         | http://localhost:9090         | Consulta e coleta de métricas  |
-| Grafana            | http://localhost:3001         | Dashboard de observabilidade   |
-| Alertmanager       | http://localhost:9093         | Gerenciamento de alertas       |
-| Redis              | localhost:6379                | Fila de jobs                   |
+| Serviço | URL | Descrição |
+| --- | --- | --- |
+| API | http://localhost:3000 | API interna do SLA Guardian |
+| Health check | http://localhost:3000/health | Verifica se a API está ativa |
+| Incidentes | http://localhost:3000/incidents | Lista histórico de incidentes |
+| Incidentes abertos | http://localhost:3000/incidents/open | Lista incidentes em aberto |
+| Métricas da API | http://localhost:3000/metrics | Métricas HTTP e Node.js da API |
+| Métricas do worker | http://localhost:3002/metrics | Métricas das URLs monitoradas |
+| Prometheus | http://localhost:9090 | Consulta e coleta de métricas |
+| Grafana | http://localhost:3001 | Dashboard de observabilidade |
+| Alertmanager | http://localhost:9093 | Gerenciamento de alertas |
+| Redis | localhost:6379 | Fila de jobs |
 
 Credenciais padrão do Grafana:
 
@@ -105,81 +107,101 @@ Usuário: admin
 Senha: admin
 ```
 
-## Configurando a URL monitorada
+## Configurando URLs monitoradas
 
-O worker monitora a URL definida em `TARGET_URL`. Se nenhuma URL for configurada, o valor padrão é:
+O worker lê a variável `TARGET_URLS`, separada por vírgula:
+
+```yaml
+worker:
+  environment:
+    - TARGET_URLS=https://www.google.com,http://localhost:9999
+```
+
+Também existe compatibilidade com `TARGET_URL` para um único alvo. Se nenhuma variável for definida, o worker usa:
 
 ```txt
 https://google.com
 ```
 
-Para alterar no Docker Compose, adicione a variável ao serviço `worker`:
-
-```yaml
-worker:
-  environment:
-    - REDIS_HOST=redis
-    - REDIS_PORT=6379
-    - WORKER_METRICS_PORT=3002
-    - TARGET_URL=https://seu-servico.com/health
-```
-
-Depois, reinicie os containers:
+Depois de alterar as URLs, recrie o worker:
 
 ```bash
-docker compose up --build
+docker compose up -d --force-recreate worker
 ```
+
+## Incidentes
+
+Quando uma URL falha, o worker cria ou atualiza um incidente aberto em SQLite. Quando a URL volta a responder, o incidente é marcado como resolvido.
+
+Endpoints disponíveis:
+
+```txt
+GET /incidents
+GET /incidents/open
+GET /incidents/:id
+```
+
+Formato resumido de um incidente:
+
+```json
+{
+  "id": 1,
+  "service_url": "http://localhost:9999",
+  "status": "open",
+  "error_message": "connect ECONNREFUSED",
+  "failure_count": 3,
+  "started_at": "2026-01-01T00:00:00.000Z",
+  "last_failure_at": "2026-01-01T00:01:00.000Z",
+  "resolved_at": null,
+  "last_duration_ms": 12
+}
+```
+
+O banco fica em `/data/sla-guardian.db` dentro dos containers e é persistido no volume Docker `incident-data`.
 
 ## Métricas principais
 
 ### API interna
 
-A API Express expõe métricas sobre o próprio SLA Guardian:
+| Métrica | Descrição |
+| --- | --- |
+| `http_requests_total` | Total de requisições por método, rota e status |
+| `http_request_duration_seconds` | Duração das requisições HTTP |
+| Métricas padrão Node.js | CPU, memória, event loop, garbage collection e processo |
 
-| Métrica                         | Descrição                                               |
-| ------------------------------- | ------------------------------------------------------- |
-| `http_requests_total`           | Total de requisições por método, rota e status          |
-| `http_request_duration_seconds` | Duração das requisições HTTP                            |
-| Métricas padrão Node.js         | CPU, memória, event loop, garbage collection e processo |
+### URLs monitoradas
 
-Essas métricas ajudam a responder se o próprio sistema de monitoramento está saudável.
+| Métrica | Descrição |
+| --- | --- |
+| `target_up` | `1` se a URL respondeu, `0` se falhou |
+| `target_response_time_ms` | Tempo da última resposta em milissegundos |
+| `target_status_code` | Último status HTTP recebido |
+| `target_checks_total` | Total de checagens por resultado |
+| `target_failures_total` | Total de falhas registradas |
+| `target_check_duration_seconds` | Histograma de duração das checagens |
+| `target_last_check_timestamp_seconds` | Timestamp da última verificação |
 
-### URL monitorada
+### Incidentes
 
-O worker expõe métricas específicas sobre o alvo configurado em `TARGET_URL`:
-
-| Métrica                               | Descrição                                 |
-| ------------------------------------- | ----------------------------------------- |
-| `target_up`                           | `1` se a URL respondeu, `0` se falhou     |
-| `target_response_time_ms`             | Tempo da última resposta em milissegundos |
-| `target_status_code`                  | Último status HTTP recebido               |
-| `target_checks_total`                 | Total de checagens por resultado          |
-| `target_failures_total`               | Total de falhas registradas               |
-| `target_check_duration_seconds`       | Histograma de duração das checagens       |
-| `target_last_check_timestamp_seconds` | Timestamp da última verificação           |
-
-Essas métricas são coletadas pelo Prometheus e exibidas no Grafana.
+| Métrica | Descrição |
+| --- | --- |
+| `incidents_open_total` | Quantidade atual de incidentes abertos |
+| `incidents_recorded_total` | Total de incidentes criados |
+| `incidents_resolved_total` | Total de incidentes resolvidos |
 
 ## Dashboard Grafana
 
-O projeto inclui um dashboard provisionado automaticamente com painéis para:
+O dashboard provisionado mostra:
 
 - Status da API.
 - Uso de CPU e memória.
 - Taxa de requisições.
 - Latência da API.
 - Taxa de sucesso e erro.
-- Status da URL monitorada.
-- Tempo de resposta da URL monitorada.
-- Status HTTP retornado pelo alvo.
+- Status das URLs monitoradas por `target_url`.
+- Tempo de resposta dos alvos.
+- Status HTTP retornado pelos alvos.
 - Percentis de duração das checagens.
-
-Também há imagens de exemplo do dashboard em:
-
-```txt
-img/cpu.PNG
-img/memory.PNG
-```
 
 ## Alertas
 
@@ -195,19 +217,36 @@ Exemplos de condições monitoradas:
 - Tráfego anormal.
 - Múltiplos serviços offline.
 
-O worker também possui um sistema próprio de alertas para falhas da URL alvo:
+O worker também possui alertas próprios para falhas dos alvos:
 
 - Alerta após 3 falhas.
 - Cooldown de 5 minutos para evitar spam.
 - Notificação de recuperação quando o serviço volta a responder.
 - Canais disponíveis: console, webhook e Slack.
 
-Variáveis úteis:
+## Testes
 
-```env
-WEBHOOK_URL=https://seu-webhook.com/alerts
-SLACK_WEBHOOK_URL=https://hooks.slack.com/services/...
+Rodar testes da API:
+
+```bash
+cd api
+npm test
 ```
+
+Rodar testes do worker:
+
+```bash
+cd worker
+npm test
+```
+
+Os testes cobrem:
+
+- Health check e métricas da API.
+- Endpoints de incidentes.
+- Parsing de `TARGET_URLS`.
+- Checagens HTTP com sucesso e falha.
+- Abertura, atualização e resolução de incidentes.
 
 ## Estrutura do projeto
 
@@ -215,69 +254,36 @@ SLACK_WEBHOOK_URL=https://hooks.slack.com/services/...
 sla-guardian/
 |-- api/
 |   `-- src/
-|       `-- index.ts              # API Express e métricas Prometheus
+|       |-- app.ts                # Express app testável
+|       |-- index.ts              # Inicialização da API
+|       `-- incidents.ts          # Leitura dos incidentes SQLite
 |-- worker/
 |   `-- src/
+|       |-- config.ts             # Parsing de TARGET_URLS e DB_PATH
 |       |-- index.ts              # Entrada do worker
-|       |-- monitor.ts            # Scheduler, fila e checagem da URL alvo
-|       |-- metrics.ts            # Métricas Prometheus do alvo monitorado
-|       |-- alert.ts              # Controle de thresholds e cooldown
+|       |-- monitor.ts            # Scheduler, fila e checagens
+|       |-- incidents.ts          # Escrita e resolução de incidentes
+|       |-- metrics.ts            # Métricas Prometheus
+|       |-- alert.ts              # Thresholds e cooldown
 |       `-- notifications.ts      # Canais de notificação
 |-- grafana-provisioning/
-|   |-- datasources/              # Datasource Prometheus
-|   |-- dashboards/               # Dashboard Grafana
-|   `-- alertmanagers/            # Integração Grafana/Alertmanager
 |-- alertmanager/
-|   |-- config.yml                # Rotas de alerta
-|   `-- templates.tmpl            # Template das notificações
-|-- prometheus.yml                # Scrape da API e do worker
-|-- prometheus-rules.yml          # Regras de alerta
-`-- docker-compose.yml            # Stack completa local
+|-- prometheus.yml
+|-- prometheus-rules.yml
+`-- docker-compose.yml
 ```
 
 ## Por que este projeto é relevante
 
-Este projeto demonstra habilidades práticas em áreas muito usadas em times de backend, plataforma e DevOps:
+Este projeto demonstra habilidades práticas em áreas usadas em backend, plataforma e DevOps:
 
-- Construção de serviços Node.js com TypeScript.
-- Exposição de métricas no padrão Prometheus.
+- Serviços Node.js com TypeScript.
 - Processamento assíncrono com filas.
+- Monitoramento de múltiplos serviços.
 - Retry e tolerância a falhas.
-- Observabilidade com Prometheus e Grafana.
+- Persistência de histórico de incidentes.
+- Métricas no padrão Prometheus.
+- Dashboard Grafana provisionado.
 - Alertas com Prometheus e Alertmanager.
-- Provisionamento de dashboard como código.
-- Orquestração local com Docker Compose.
-
-É um projeto pequeno o suficiente para ser entendido rapidamente, mas completo o bastante para mostrar domínio de conceitos importantes de sistemas em produção.
-
-## Desenvolvimento local sem Docker Compose
-
-Caso queira executar os serviços manualmente:
-
-```bash
-docker run -p 6379:6379 redis:7-alpine
-```
-
-Em outro terminal, execute a API:
-
-```bash
-cd api
-npm install
-npm run dev
-```
-
-Em outro terminal, execute o worker:
-
-```bash
-cd worker
-npm install
-npm run dev
-```
-
-Endpoints úteis:
-
-```bash
-curl http://localhost:3000/health
-curl http://localhost:3000/metrics
-curl http://localhost:3002/metrics
-```
+- Testes automatizados.
+- Orquestração com Docker Compose.

@@ -1,18 +1,23 @@
-// 🚀 SLA Guardian Worker - Main Entry Point
+import dotenv from "dotenv";
+import { startMonitor } from "./monitor";
 
-import "./monitor"; // Inicia scheduler e worker
+dotenv.config();
 
-console.log("🔧 Iniciando SLA Guardian Worker...\n");
+console.log("Iniciando SLA Guardian Worker...\n");
 
-// Graceful shutdown
+startMonitor().catch((error) => {
+  console.error("Erro ao iniciar worker:", error);
+  process.exit(1);
+});
+
 process.on("SIGINT", async () => {
-  console.log("\n🛑 Encerrando worker...");
+  console.log("\nEncerrando worker...");
   process.exit(0);
 });
 
 process.on("SIGTERM", async () => {
-  console.log("\n🛑 Encerrando worker (SIGTERM)...");
+  console.log("\nEncerrando worker (SIGTERM)...");
   process.exit(0);
 });
 
-console.log("✅ Worker rodando e pronto para monitorar serviços\n");
+console.log("Worker pronto para monitorar serviços\n");

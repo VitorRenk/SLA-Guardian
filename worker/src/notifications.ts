@@ -4,10 +4,7 @@
  */
 
 import axios from "axios";
-import dotenv from "dotenv";
 import { AlertPayload, AlertChannel } from "./alert";
-
-dotenv.config();
 
 /**
  * 💻 Canal Console (desenvolvimento)

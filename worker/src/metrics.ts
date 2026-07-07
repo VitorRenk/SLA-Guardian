@@ -58,6 +58,24 @@ export const targetLastCheckTimestampSeconds = new client.Gauge({
   registers: [register],
 });
 
+export const incidentsOpenTotal = new client.Gauge({
+  name: "incidents_open_total",
+  help: "Current number of open incidents.",
+  registers: [register],
+});
+
+export const incidentsRecordedTotal = new client.Counter({
+  name: "incidents_recorded_total",
+  help: "Total number of incidents opened.",
+  registers: [register],
+});
+
+export const incidentsResolvedTotal = new client.Counter({
+  name: "incidents_resolved_total",
+  help: "Total number of incidents resolved.",
+  registers: [register],
+});
+
 export function recordTargetCheck(params: {
   url: string;
   success: boolean;
@@ -82,6 +100,18 @@ export function recordTargetCheck(params: {
     targetStatusCode.set(labels, 0);
     targetFailuresTotal.inc(labels);
   }
+}
+
+export function setOpenIncidents(count: number): void {
+  incidentsOpenTotal.set(count);
+}
+
+export function recordIncidentOpened(): void {
+  incidentsRecordedTotal.inc();
+}
+
+export function recordIncidentResolved(): void {
+  incidentsResolvedTotal.inc();
 }
 
 export function startMetricsServer(port: number): http.Server {
