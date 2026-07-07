@@ -105,4 +105,46 @@ describe("API app", () => {
 
     await request(app).get("/incidents/999").expect(404);
   });
+
+  it("renders a readable incidents UI", async () => {
+    const dbPath = tempDbPath();
+    await createIncidentDb(dbPath);
+    const app = createApp({ dbPath });
+
+    const response = await request(app)
+      .get("/incidents/ui")
+      .expect("Content-Type", /html/)
+      .expect(200);
+
+    expect(response.text).toContain("Incidentes");
+    expect(response.text).toContain("https://example.com");
+    expect(response.text).toContain("timeout");
+  });
+
+  it("filters open incidents in the UI", async () => {
+    const dbPath = tempDbPath();
+    await createIncidentDb(dbPath);
+    const app = createApp({ dbPath });
+
+    const response = await request(app)
+      .get("/incidents/ui?status=open")
+      .expect("Content-Type", /html/)
+      .expect(200);
+
+    expect(response.text).toContain("https://example.com");
+    expect(response.text).toContain("class=\"filter active\"");
+  });
+
+  it("renders resolved filter even when there are no resolved incidents", async () => {
+    const dbPath = tempDbPath();
+    await createIncidentDb(dbPath);
+    const app = createApp({ dbPath });
+
+    const response = await request(app)
+      .get("/incidents/ui?status=resolved")
+      .expect("Content-Type", /html/)
+      .expect(200);
+
+    expect(response.text).toContain("Nenhum incidente encontrado");
+  });
 });

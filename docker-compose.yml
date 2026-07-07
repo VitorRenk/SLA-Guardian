@@ -32,7 +32,7 @@ services:
       - REDIS_PORT=6379
       - WORKER_METRICS_PORT=3002
       - DB_PATH=/data/sla-guardian.db
-      - TARGET_URLS=https://www.google.com,http://localhost:9999
+      - TARGET_URLS=https://www.google.com,http://localhost:9999,https://sitevito123.com.br,https://www.github.com,https://www.youtube.com,https://www.facebook.com,https://www.instagram.com,https://www.linkedin.com,https://www.twitter.com,https://www.reddit.com,https://www.pinterest.com,https://www.tiktok.com,https://www.snapchat.com,https://www.whatsapp.com,https://www.telegram.org,https://www.discord.com,https://www.slack.com,https://www.microsoft.com,https://www.apple.com,https://www.amazon.com,https://www.netflix.com
     volumes:
       - incident-data:/data
     depends_on:

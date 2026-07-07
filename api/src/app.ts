@@ -4,6 +4,7 @@ import helmet from "helmet";
 import morgan from "morgan";
 import client from "prom-client";
 import { getDbPath, getIncidentById, listIncidents } from "./incidents";
+import { renderIncidentPage } from "./incidentView";
 
 export function createApp(options: { dbPath?: string } = {}) {
   const app = express();
@@ -74,6 +75,33 @@ export function createApp(options: { dbPath?: string } = {}) {
   app.get("/incidents/open", async (_req, res, next) => {
     try {
       res.json({ incidents: await listIncidents(dbPath, "open") });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/incidents/ui", async (req, res, next) => {
+    try {
+      const rawStatus = String(req.query.status || "");
+      const status =
+        rawStatus === "open" || rawStatus === "resolved"
+          ? rawStatus
+          : undefined;
+      const allIncidents = await listIncidents(dbPath);
+      const incidents = status
+        ? allIncidents.filter((incident) => incident.status === status)
+        : allIncidents;
+
+      res
+        .status(200)
+        .type("html")
+        .send(
+          renderIncidentPage({
+            incidents,
+            allIncidents,
+            activeFilter: status || "all",
+          }),
+        );
     } catch (error) {
       next(error);
     }

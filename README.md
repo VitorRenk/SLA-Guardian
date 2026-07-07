@@ -91,6 +91,7 @@ Após a inicialização, a API, worker, Redis, Prometheus, Grafana e Alertmanage
 | --- | --- | --- |
 | API | http://localhost:3000 | API interna do SLA Guardian |
 | Health check | http://localhost:3000/health | Verifica se a API está ativa |
+| UI de incidentes | http://localhost:3000/incidents/ui | Visualização legível dos incidentes |
 | Incidentes | http://localhost:3000/incidents | Lista histórico de incidentes |
 | Incidentes abertos | http://localhost:3000/incidents/open | Lista incidentes em aberto |
 | Métricas da API | http://localhost:3000/metrics | Métricas HTTP e Node.js da API |
@@ -136,10 +137,13 @@ Quando uma URL falha, o worker cria ou atualiza um incidente aberto em SQLite. Q
 Endpoints disponíveis:
 
 ```txt
+GET /incidents/ui
 GET /incidents
 GET /incidents/open
 GET /incidents/:id
 ```
+
+Use `/incidents/ui` para ver os incidentes em uma página HTML simples. Os demais endpoints continuam retornando JSON para integração e testes.
 
 Formato resumido de um incidente:
 
